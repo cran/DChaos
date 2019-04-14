@@ -1,0 +1,17 @@
+3db901d5073d8183fa1d500f127d44ba *DESCRIPTION
+c5b53747a3b59b50095f38ff295bf297 *NAMESPACE
+21a50770e2200ae0708f194764b55337 *R/chaotic.ts.R
+165287c33177633c1e37838d1981d71f *R/embedding.R
+28d1a51c130acf42cabe8bebafb3d0f1 *R/jacobi.R
+2a1de95686bf0e43361f83d7ae870635 *R/lyapunov.R
+5b284df6b9660b536c8f3656c2d987cd *R/lyapunov.max.R
+02e7da33280b0be6708d4266a0dd6075 *R/lyapunov.spec.R
+be3582491a865dec801458825abd3079 *man/embedding.Rd
+33f6c66e78060dd3e97da1d8d1e1bcaf *man/henon.ts.Rd
+2641e39154970755f6604ea8e94632d1 *man/jacobi.Rd
+02f28046e432e221fcf931edd756b11b *man/logistic.ts.Rd
+9dd9d99376d575965aa6424f01e57bf2 *man/lorenz.ts.Rd
+84f8906faa016b3bbbf9aee0c167941f *man/lyapunov.Rd
+61f20b0c66060bb36b933bf2ad354d4b *man/lyapunov.max.Rd
+49530735845b8e0cb0b0ed46e37a911e *man/lyapunov.spec.Rd
+66067dac9eae4beca831aa9c47146aef *man/rossler.ts.Rd
