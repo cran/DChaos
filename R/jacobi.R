@@ -71,6 +71,8 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
 
   # Settings
   BIC<-c()
+  p<-c() #new
+  f<-c() #new
   c<-0
   for (m in M0:M1){
     b<-0
@@ -78,11 +80,14 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
     embd<-embedding(x,m=m,lag=lag,timelapse = timelapse)
     y<-as.data.frame(embd[,1])
     xo<-embd[,c(2:m)]
+    n<-nrow(xo)
     for (h in H0:H1){
       b<-b+1
       w0<-w0inicial(xo,y,I=I,h=h,m=m,seed.t = T)
-      net.nn<-nnet::nnet(xo,y,size=h,Wts=w0, maxit=500,linout = T,trace=F)
-      BIC[b]<-net.nn$value
+      net.nn<-nnet::nnet(xo,y,size=h,maxit=1e5,linout = T,trace=T)
+      p[b]<-length(net.nn$wts)
+      f[b]<-n*log(net.nn$value/n)
+      BIC[b]<-p[b]*log(n)+f[b]
       opt[b,]<-cbind(m,h,BIC[b])
     }
     net.fit[c,]<-opt[which.min(opt[,3]),]

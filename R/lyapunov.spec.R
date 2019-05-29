@@ -55,7 +55,7 @@ lyapunov.spec<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=T
   m<-ncol(x)
   blocking = match.arg(blocking)
 
-  # Estimates the Lyapunov exponent spectrum: Full sample
+  # Estimates the Lyapunov exponent: target
   lyap_spec_full<-function(x,doplot=TRUE){
 
     # Lyapunov exponents
@@ -108,7 +108,7 @@ lyapunov.spec<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=T
     varlv2<-pracma::zeros(1,m)
     varlv2<-diag((sandwich::lrvar(etalv, type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F)))^0.5
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     Ztest<-pracma::zeros(1,m)
     p.value<-pracma::zeros(1,m)
     for (r in 1:m){
@@ -190,7 +190,7 @@ lyapunov.spec<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=T
       varlv2[b,]<-diag((sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE)))^0.5
     }
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     # Mean value
     lpv_mean<-apply(lpv,2,mean)
     sdlpv_mean<-apply(varlv2,2,mean)
@@ -288,7 +288,7 @@ lyapunov.spec<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=T
       varlv2[b,]<-diag((sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE)))^0.5
     }
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     # Mean value
     lpv_mean<-apply(lpv,2,mean)
     sdlpv_mean<-apply(varlv2,2,mean)
@@ -392,7 +392,7 @@ lyapunov.spec<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=T
       varlv2[b,]<-diag((sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE)))^0.5
     }
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     # Mean value
     lpv_mean<-apply(lpv,2,mean)
     sdlpv_mean<-apply(varlv2,2,mean)

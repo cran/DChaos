@@ -104,7 +104,7 @@ lyapunov.max<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=TR
     # Long-run variance of the eta's mean
     varmax<-(sandwich::lrvar(etalvmax, type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F))^0.5
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     Ztestmax<-lvmax[N]/(varmax/sqrt(N))
     p.value.max<-pnorm(Ztestmax)
 
@@ -166,7 +166,7 @@ lyapunov.max<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=TR
       varmax[1,b]<-(sandwich::lrvar(etalvmax[,b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE))^0.5
     }
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     # Mean value
     lvmax_mean<-mean(lvmax[M,])
     sdlvmax_mean<-mean(varmax[1,])
@@ -239,7 +239,7 @@ lyapunov.max<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=TR
       varmax[1,b]<-(sandwich::lrvar(etalvmax[,b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE))^0.5
     }
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     # Mean value
     lvmax_mean<-mean(lvmax[M,])
     sdlvmax_mean<-mean(varmax[1,])
@@ -318,7 +318,7 @@ lyapunov.max<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=TR
       varmax[1,b]<-(sandwich::lrvar(etalvmax[,b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE))^0.5
     }
 
-    # Hypothesis contrast (H0: λ >= 0)
+    # Hypothesis contrast
     # Mean value
     lvmax_mean<-mean(lvmax[M,abs(outliers::scores(lvmax[M,], type = c("iqr")))<1.5])
     sdlvmax_mean<-mean(varmax[1,abs(outliers::scores(varmax[1,], type = c("iqr")))<1.5])
