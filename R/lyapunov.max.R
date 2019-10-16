@@ -65,27 +65,20 @@ lyapunov.max<-function(x,blocking=c("FULL","NOVER","EQS","BOOT"),B=100,doplot=TR
     v[1,1]<-1
     for (i in 1:N){
       J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
-      if (any(is.nan(J[1,])) | any(is.infinite(J[1,]))){
-        lvmax[i]<-lvmax[i-1]
-      } else {
-        TM<-J%*%TM
-        # To avoid that the value of Jacobians tend to infinity after multiplying n-times
-        if (any(is.nan(TM[1,])) | any(is.infinite(TM[1,]))){
-          lpv<-lvmax[c((i-101):(i-1))]
-          k<-rep(seq(1,100,1),ceiling((N-i)/100))
-          xo<-i
-          s<-1
-          for (j in xo:N){
-            z<-k[s]
-            lvmax[j]<-lpv[z]-runif(1,0.0001,0.001)
-            s<-s+1
-          }
-          break
-        } else {
-          lvmax[i]<-(1/i)*log(max(svd(TM%*%v)$d))
-        }
-      }
+      TM0<-TM
+      TM<-J%*%TM
+      norsal <- try(svd(TM%*%v),silent = FALSE)
+      if('try-error' %in% class(norsal)){
+      TM<-TM0
+      lvmax[i]<-lvmax[i-1]
+      next
+    } else {
+      lvmax[i]<-(1/i)*log(max(svd(TM%*%v)$d))
     }
+      if (is.infinite(log(max(svd(TM%*%v)$d))) | log(max(svd(TM%*%v)$d)) == 0){
+      stop("Lyapunov exponent tends to infinity - Not convergence \n")
+      }
+  }
 
     # Plots
     if (doplot==TRUE){

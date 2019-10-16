@@ -55,7 +55,7 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
   if (is.null(x)){stop("'x' should be a numeric vector, time serie, data frame or matrix depending on the method selected in 'timelapse'")}
   if (lag < 1){stop("wrong value for the reconstruction delay")}
   if (is.null(timelapse)){stop("'timelapse' should be 'FIXED' or 'VARIABLE'")}
-  if ((M0 < 3) | (M1 < M0) | M1 > length(x)){stop("wrong value for the embedding dimension")}
+  if ((M0 < 1) | (M1 < M0) | M1 > length(x)){stop("wrong value for the embedding dimension")}
   if ((H0 < 2) | (H1 < H0) | H1 > length(x)){stop("wrong value for the number of neurones in the hidden layer")}
   if (I<1){stop("wrong value of neural networks iterations")}
   if (M0 == M1){
@@ -71,15 +71,15 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
 
   # Settings
   BIC<-c()
-  p<-c() #new
-  f<-c() #new
+  p<-c()
+  f<-c()
   c<-0
   for (m in M0:M1){
     b<-0
     c<-c+1
-    embd<-embedding(x,m=m,lag=lag,timelapse = timelapse)
+    embd<-embedding(x,m=m+1,lag=lag,timelapse = timelapse)
     y<-as.data.frame(embd[,1])
-    xo<-embd[,c(2:m)]
+    xo<-as.data.frame(embd[,c(2:(m+1))])
     n<-nrow(xo)
     for (h in H0:H1){
       b<-b+1
@@ -98,9 +98,9 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
   for(k in 1:nrow(net.fit)){
     m<-as.numeric(net.fit[k,1])
     h<-as.numeric(net.fit[k,2])
-    embd<-embedding(x,m=m,lag=lag,timelapse = timelapse)
+    embd<-embedding(x,m=m+1,lag=lag,timelapse = timelapse)
     y<-as.data.frame(embd[,1])
-    xo<-embd[,c(2:m)]
+    xo<-as.data.frame(embd[,c(2:(m+1))])
     w0<-w0inicial(xo,y,I=I,h=h,m=m,seed.t = T)
     net.nn<-nnet::nnet(xo,y,size=h,Wts=w0, maxit=500,linout = T,trace=F)
 
@@ -115,8 +115,8 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
     w<-net.nn$wts
     if (pre.white==TRUE) {
       yo.net<-as.vector(net.nn$fitted.values)
-      xo.net<-embedding(yo.net,m=m,lag=1,timelapse="FIXED")
-      xo.net<-xo.net[,c(2:m)]
+      xo.net<-embedding(yo.net,m=m+1,lag=1,timelapse="FIXED")
+      xo.net<-xo.net[,c(2:(m+1))]
     } else {
       xo.net<-xo
     }
@@ -124,27 +124,24 @@ jacobi<-function(x,lag=1,timelapse="FIXED",M0=3,M1=10,H0=2,H1=10,I=100,pre.white
     z<-matrix(nrow = dim(xo.net)[1],ncol=h)
     dphi<-matrix(nrow = dim(xo.net)[1], ncol=h)
     zout<-matrix(nrow = dim(xo.net)[1],ncol=h)
-    dzout<-matrix(nrow = dim(xo.net)[1],ncol=(m-1))
+    dzout<-matrix(nrow = dim(xo.net)[1],ncol=(m))
     wout<-c()
     wz<-c()
     for (i in 1:h){
-      z[,i]<-w[i+(i-1)*(m-1)]+xo.net%*%w[(i+(i-1)*(m-1)+1):((i+(i-1)*(m-1))+(m-1))]
+      z[,i]<-w[i+(i-1)*(m)]+xo.net%*%w[(i+(i-1)*(m)+1):((i+(i-1)*(m))+(m))]
       dphi[,i]<-exp(z[,i])/(1+exp(z[,i]))^2
-      wout[i]<-w[1+i+h*m]
+      wout[i]<-w[1+i+h+h*m]
       zout[,i]<-dphi[,i]*wout[i]
     }
-    for (j in 1:(m-1)){
+      for (j in 1:(m)){
       for(s in 1:h){
-        wz[s]<-w[(s-1)*m+(j+1)]
+        wz[s]<-w[(s-1)*m+(s-1)+(j+1)]
         wzout<-cbind(wz)
       }
       dzout[,j]<-zout%*%wzout
     }
     dzout<-as.data.frame(dzout)
-    name.c<-paste(make.unique(rep("Derivative Xt-", m), sep = ""),"lag",sep="")
-    name.r<-make.unique(rep("t=", (nrow(dzout)+1)), sep = "")
-    colnames(dzout)[c(1:(m-1))]<-name.c[c(2:m)]
-    rownames(dzout)<-name.r[c(2:(nrow(dzout)+1))]
+    colnames(dzout)<-paste("df/dXt-", 1:m,"lag",sep="")
     derivatives[[k]]<-dzout
   }
 
@@ -167,7 +164,7 @@ w0inicial<-function(x,y,rangx=1/max(abs(x)),I=100,h=2,m=2,seed.t=TRUE,seed=56666
 
   # Estimation of the initial conditions
   for (i in 1:I){
-    W0<-runif(h*m+h+1, min=-rangx, max=rangx)
+    W0<-runif(h*(m+1)+h+1, min=-rangx, max=rangx)
     net.nn<-nnet::nnet(x,y,size=h,Wts=W0,maxit=0,linout = T,trace=F)
     if(i==1){
       ECMWts0<-net.nn$value

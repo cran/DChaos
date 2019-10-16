@@ -41,7 +41,7 @@ embedding<-function(x,m=3,lag=1,timelapse=c("FIXED","VARIABLE")){
 
   # Checks
   if (is.null(x)){stop("'x' should be a numeric vector, time serie, data frame or matrix depending on the method selected in 'timelapse'")}
-  if (m < 3){stop("wrong value for the embedding dimension")}
+  if (m < 1){stop("wrong value for the embedding dimension")}
   if (lag < 1){stop("wrong value for the reconstruction delay")}
   if (is.null(timelapse)){stop("'timelapse' should be 'FIXED' or 'VARIABLE'")}
   timelapse = match.arg(timelapse)
@@ -55,18 +55,24 @@ embedding<-function(x,m=3,lag=1,timelapse=c("FIXED","VARIABLE")){
     } else {
       xout<-x
     }
-    xout<-xout[-(1:((m-1)*lag))]
-    l<-length(xout)-1
-    for (i in 1:(m-1)){
-      xout<-cbind(xout,x[(((m-i)*lag)-(lag-1)):((m-i)*lag+l-(lag-1))])
+    if (m == 1){
+      xout<-xout[-(1:lag)]
+      return(xout)
+      stop()
+    } else {
+      xout<-xout[-(1:((m-1)*lag))]
+      l<-length(xout)-1
+      for (i in 1:(m-1)){
+        xout<-cbind(xout,x[(((m-i)*lag)-(lag-1)):((m-i)*lag+l-(lag-1))])
+      }
+      xout<-as.data.frame(xout)
+      colnames(xout)[1]<-"Xt"
+      name.c<-paste(make.unique(rep("Xt-", m), sep = ""),"lag",sep="")
+      name.r<-make.unique(rep("t=", (nrow(xout)+1)), sep = "")
+      colnames(xout)[c(2:m)]<-name.c[c(2:m)]
+      rownames(xout)<-name.r[c(2:(nrow(xout)+1))]
+      return(xout)
     }
-    xout<-as.data.frame(xout)
-    colnames(xout)[1]<-"Xt"
-    name.c<-paste(make.unique(rep("Xt-", m), sep = ""),"lag",sep="")
-    name.r<-make.unique(rep("t=", (nrow(xout)+1)), sep = "")
-    colnames(xout)[c(2:m)]<-name.c[c(2:m)]
-    rownames(xout)<-name.r[c(2:(nrow(xout)+1))]
-    return(xout)
   }
 
   # Settings
