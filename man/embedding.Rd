@@ -2,50 +2,58 @@
 % Please edit documentation in R/embedding.R
 \name{embedding}
 \alias{embedding}
-\title{Construction of embedding vectors using the method of delays}
+\title{Provides the delayed-coordinate embedding vectors backwards}
 \usage{
-embedding(x, m = 3, lag = 1, timelapse = c("FIXED", "VARIABLE"))
+embedding(x, m = 2, lag = 1, timelapse = c("FIXED", "VARIABLE"))
 }
 \arguments{
-\item{x}{a numeric vector, time serie, data frame or matrix depending on the method selected in \code{timelapse}.}
+\item{x}{a \code{vector}, a time-series object \code{ts} or \code{xts}, a \code{data.frame}, a \code{data.table} or a \code{matrix} depending on the method selected in \code{timelapse}.}
 
-\item{m}{a non-negative integer denoting the embedding dimension (Default 3).}
+\item{m}{a non-negative integer denoting the embedding dimension (Default 2).}
 
 \item{lag}{a non-negative integer denoting the reconstruction delay (Default 1).}
 
-\item{timelapse}{a character denoting if you consider that the observations are sampled at uniform time intervals \code{FIXED} or with a variable time-lapse between each observation \code{VARIABLE} (Default \code{FIXED}).}
+\item{timelapse}{a character denoting if the time-series data are sampled at uniform time-frequency e.g., 1-month, 1-day, 1-hour, 30-min, 5-min, 1-min and so on \code{FIXED} or non-uniform time-frequency which are not equally spaced in time \code{VARIABLE} (Default \code{FIXED}).}
 }
 \value{
-A data frame with the uniform or non-uniform embedding vectors by columns from an univariate time serie considering the parameter set selected by the user.
+The uniform or non-uniform delayed-coordinate embedding vectors backwards by columns from an univariate time-series data considering the parameter set selected by the user. If \code{FIXED} has been selected \code{data} must be a \code{vector} or a time-series object \code{ts} or \code{xts}. Otherwise \code{VARIABLE} has to be specified. In this case \code{data} must be a \code{data.frame}, a \code{data.table} or a \code{matrix} with two columns, the date and the univariate time series as a sequence of numerical values, in that order. The date can have the following three classes: \code{POSIXt}, \code{Date} or \code{Factor}. In the latter case the date should come in the following format \code{YMD H:M:OS3} considering milliseconds e.g., 20190407 00:00:03.347. If you don't consider milliseconds you must put .000 after the seconds.
 }
 \description{
-This function generates both the uniform and non-uniform embedding vectors set from an univariate time serie considering the argument set selected by the user.
+This function generates both the uniform and non-uniform embedding vectors backwards using the method of delays from univariate time-series data.
 }
-\details{
-If \code{FIXED} has been selected \code{x} must be a numeric vector or time serie. Otherwise \code{VARIABLE} has to be specified. In this case \code{x} must be a data frame or matrix with two columns. First, the date with the following format \code{YMD H:M:OS3} considering milliseconds e.g., 20190407 00:00:03.347. If you don't consider milliseconds you must put .000 after the seconds. It should be an object of class \code{Factor}. Second, the univariate time serie as a sequence of numerical values.
+\note{
+Note that a key point to create a suitable reconstruction of the state-space is to fix a criteria in order to estimate the embedding parameters. Researchers usually estimate them using heuristic approaches based on prescriptions proposed by e.g., H.D. Abarbanel (1996) or H. Kantz and T. Schreiber (2004). The main drawbacks of these heuristic approaches are the following: they are not intrinsically statistical; their results are not robust; they lead to estimators whose properties are unknown or largely unexplored; they do not take into account the results of any model fit. The alternative proposed by the statistical approach solves those disadvantages. The statistical approach to state-space reconstruction can be viewed as a best subset selection problem within the nonparametric regression context as argued K.-S. Chan and H. Tong (2001). The DChaos package allows the R users to choose between both methods. By default it uses the statistical approach based on model selection procedures instead of heuristic techniques, see \code{netfit} function.
 }
 \examples{
-## The first ten values corresponding to the uniform embedding
-## vectors set for m=5 and lag=1 are showed by simulating
-## time series from the logistic equation.
-data<-logistic.ts(u.min=4,u.max=4,B=100,doplot=FALSE)
-ts<-data$`Logistic 100`$time.serie
-embed<-embedding(ts,m=5,lag=1,timelapse="FIXED")
-show(head(embed, 10))
+## set.seed(34)
+## Simulates time-series data from the Logistic map with chaos
+## ts        <- DChaos::logistic.sim(n=1000, a=4)
+## show(head(ts, 5))
+
+## Provides the uniform delayed-coordinate embedding vectors (Backward)
+## data      <- DChaos::embedding(ts, m=5, lag=2, timelapse="FIXED")
+## show(head(data, 5))
+
+## Simulates tick-by-tick data (bid price) for Starbucks company
+## ts        <- highfrequency::sbux
+## show(head(ts, 5))
+
+## Provides the non-uniform delayed-coordinate embedding vectors (Backward)
+## data      <- DChaos::embedding(ts, m=3, lag=4, timelapse="VARIABLE")
+## show(head(data, 5))
 }
 \references{
 Ruelle, D., Takens, F. 1971 On the nature of turbulence. Communications in Mathematical Physics 20(3):167-192.
 
-Packard, N.H., Crutchfield, J.P., Farmer, J.D., Shaw, R.S. 1980 Geometry from a time serie. Physical Review Letters 45:712-716.
-
 Takens, F. 1981 Detecting strange attractors in turbulence. Springer Berlin Heidelberg.
 
-Sauer, T., Yorke, J.A., Casdagli, M. 1991 Embedology. Journal of Statistical Physics 65(3):579-616.
+Abarbanel, H.D. 1996 Analysis of observed chaotic data. Springer.
+
+Cha, K.-S., Tong, H. 2001 Chaos: a statistical perspective. Springer-Verlag.
+
+Kantz, H., Schreiber, T. 2004 Nonlinear time series analysis, volume 7. Cambridge university press.
 
 Huke, J.P., Broomhead, D.S. 2007 Embedding theorems for non-uniformly sampled dynamical systems. Nonlinearity 20(9):205-244.
-}
-\seealso{
-\code{\link{jacobi}}
 }
 \author{
 Julio E. Sandubete, Lorenzo Escot

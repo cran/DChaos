@@ -2,25 +2,46 @@
 % Please edit documentation in R/lyapunov.max.R
 \name{lyapunov.max}
 \alias{lyapunov.max}
-\title{Estimation of the largest Lyapunov Exponent}
+\title{Estimates the largest Lyapunov exponent}
 \usage{
-lyapunov.max(x, blocking = c("FULL", "NOVER", "EQS", "BOOT"), B = 100,
-  doplot = TRUE)
+lyapunov.max(
+  x,
+  blocking = c("BOOT", "NOVER", "EQS", "FULL"),
+  B = 1000,
+  doplot = TRUE
+)
 }
 \arguments{
-\item{x}{a matrix or data frame containing the partial derivatives of jacobian.}
+\item{x}{a \code{matrix}, \code{data.frame} or \code{data.table} containing the partial derivatives computed by the \code{jacobian.net} function.}
 
-\item{blocking}{a character denoting if you consider the full sample \code{FULL}, the non-overlapping sample \code{NOVER}, the equally spaced sample \code{EQS} or the bootstrap sample \code{BOOT} (Default \code{FULL}).}
+\item{blocking}{a character denoting the blocking method chosen for figuring out the largest Lyapunov exponent through the Norma-2 procedure. Available options are \code{FULL} if the user considers the full sample, \code{NOVER} if the user considers the non-overlapping sample, \code{EQS} if the user considers the equally spaced sample or \code{BOOT} if the user considers the bootstrap sample (Default \code{BOOT}).}
 
-\item{B}{a non-negative integer denoting the number of bootstrap iterations (Default 100).}
+\item{B}{a non-negative integer denoting the number of bootstrap iterations (Default 1000).}
 
-\item{doplot}{a logical value denoting if you want to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} shows as many graphs as embedding dimensions have been considered. Each of them represents the evolution of the largest Lyapunov exponent values for the whole period considering the blocking method selected by the user (Default \code{TRUE}).}
+\item{doplot}{a logical value denoting if the user wants to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} the evolution of the Lyapunov exponent values are represented for the whole period considering the blocking method chosen by the user. It shows as many graphs as embedding dimensions have been considered (Default \code{TRUE}).}
 }
 \value{
-A list containing the largest Lyapunov exponent considering the parameter set selected by the user. The dataset saved by each blocking method are the estimated Lyapunov exponent value, the standard error, the z-test value and the p-value. If the user chooses the non-overlapping sample, the equally spaced sample or the bootstrap sample the mean and median values of the Lyapunov exponent are showed. Also some details about the embedding dimension, the sample size, the block length and the block number are recorded.
+This function returns several objects considering the parameter set selected by the user. The largest Lyapunov exponent considering the Norma-2 procedure by each blocking method are estimated. It also contains some useful information about the estimated jacobian, the best-fitted feed-forward single hidden layer neural net model, the best set of weights found, the fitted values, the residuals obtained, the best embedding parameters set chosen, the sample size or the block length considered by each blocking method. This function provides the standard error, the z test value and the p-value for testing the null hypothesis \eqn{H0: \lambda_k > 0 for k = 1} (largest). Reject the null hypothesis ${H_0}$ means lack of chaotic behaviour. That is, the data-generating process does not have a chaotic attractor because of it does not show the property of sensitivity to initial conditions.
 }
 \description{
-This function estimates the largest Lyapunov exponent through the Norma-2 method considering the argument set selected by the user.
+This function estimates the largest Lyapunov exponent through the Norma-2 procedure based on the partial derivatives computed by the \code{jacobian.net} function.
+}
+\note{
+The DChaos package provides several ways to figure out robustly the neural net estimator of the k-th Lyapunov exponent. On the one hand if the R users have previously obtained the partial derivatives from the \code{jacobian.net} function they can apply directly the function \code{lyapunov.spec} which estimates the Lyapunov exponent spectrum taking into account the QR decomposition procedure. They can also use the function \code{lyapunov.max} which estimates only the largest Lyapunov exponent considering the Norma-2 procedure. Hence the DChaos package allows the R users to choose between two different procedures to obtain the neural net estimator of the k-th Lyapunov exponent and four ways of subsampling by blocks: full sample, non-overlapping sample, equally spaced sample and bootstrap sample. The blocking methods what they do is to split the time-series data into several blocks by estimating a Lyapunov exponent for each subsample. If the R users choose the non-overlapping sample (\code{blocking = "NOVER"}), the equally spaced sample (\code{blocking = "EQS"}) or the bootstrap sample (\code{blocking = "BOOT"}) the mean and median values of the Lyapunov exponent for each block or subsample are saved. By default we recommend using the median value as it is more robust to the presence of outliers. Notice that the parameter \code{B} will only be considered if the R users choose the bootstrap blocking method.
+}
+\examples{
+## set.seed(34)
+## Simulates time-series data from the Logistic map with chaos
+## ts        <- DChaos::logistic.sim(n=1000, a=4)
+## show(head(ts, 5))
+
+## Provides the largest Lyapunov exponent by the Norma-2 procedure considering the
+## bootstrap blocking method from the best-fitted neural net model and the partial
+## derivatives showed in the jacobian.net example.
+## jacobian <- DChaos::jacobian.net(data=ts, m=3:3, lag=1:1, timelapse="FIXED", h=2:10)
+## summary(jacobian)
+## exponent <- DChaos::lyapunov.max(x=jacobian, blocking="BOOT", B=100, doplot=FALSE)
+## summary(exponent)
 }
 \references{
 Ellner, S., Gallant, A., McCaffrey, D., Nychka, D. 1991 Convergence rates and data requirements for jacobian-based estimates of lyapunov exponents from data. Physics Letters A 153(6):357-363.
@@ -32,20 +53,6 @@ Nychka, D., Ellner, S., Gallant, A.R., McCaffrey, D. 1992 Finding chaos in noisy
 Whang, Y.J., Linton, O. 1999 The asymptotic distribution of nonparametric estimates of the lyapunov exponent for stochastic time series. Journal of Econometrics 91(1):1-42.
 
 Shintani, M., Linton, O. 2004 Nonparametric neural network estimation of Lyapunov exponents and a direct test for chaos. Journal of Econometrics 120(1):1-33.
-## We show below an example considering time series from the
-## logistic equation. We have estimated the largest Lyapunov
-## exponent considering the bootstrap sample for an embedding
-## dimension (m=4). First of all, we need to estimates the
-## partial derivatives of the jacobian.
-data<-logistic.ts(u.min=4,u.max=4,B=100,doplot=FALSE)
-ts<-data$`Logistic 100`$time.serie
-jacob<-jacobi(ts,M0=4,M1=4,doplot=FALSE)
-deriv<-jacob$Jacobian.net
-lyapu<-lyapunov.max(deriv,blocking="BOOT",B=100)
-show(lyapu$Exponent)
-}
-\seealso{
-\code{\link{lyapunov.spec}}, \code{\link{lyapunov}}
 }
 \author{
 Julio E. Sandubete, Lorenzo Escot

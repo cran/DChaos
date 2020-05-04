@@ -2,64 +2,78 @@
 % Please edit documentation in R/lyapunov.R
 \name{lyapunov}
 \alias{lyapunov}
-\title{Estimation of the Lyapunov exponent through several methods}
+\title{Estimates the Lyapunov exponent through several methods}
 \usage{
-lyapunov(x, lag = 1, timelapse = "FIXED", M0 = 3, M1 = 10,
-  H0 = 2, H1 = 10, I = 100, lyapmethod = c("LLE", "SLE", "ALL"),
-  blocking = c("FULL", "NOVER", "EQS", "BOOT", "ALL"),
-  pre.white = TRUE, B = 100, netplot = TRUE, doplot = TRUE)
+lyapunov(
+  data,
+  m = 1:4,
+  lag = 1:1,
+  timelapse = c("FIXED", "VARIABLE"),
+  h = 2:10,
+  w0maxit = 100,
+  wtsmaxit = 1e+06,
+  pre.white = TRUE,
+  lyapmethod = c("SLE", "LLE", "ALL"),
+  blocking = c("BOOT", "NOVER", "EQS", "FULL", "ALL"),
+  B = 1000,
+  trace = 1,
+  seed.t = TRUE,
+  seed = 56666459,
+  doplot = TRUE
+)
 }
 \arguments{
-\item{x}{a numeric vector, time serie, data frame or matrix depending on the method selected in \code{timelapse}.}
+\item{data}{a \code{vector}, a time-series object \code{ts} or \code{xts}, a \code{data.frame}, a \code{data.table} or a \code{matrix} depending on the method selected in \code{timelapse}.}
 
-\item{lag}{a non-negative integer denoting the reconstruction delay (Default 1).}
+\item{m}{a non-negative integer denoting a lower and upper bound for the embedding dimension (Default 1:4).}
 
-\item{timelapse}{a character denoting if you consider that the observations are sampled at uniform time intervals \code{FIXED} or with a variable time-lapse between each observation \code{VARIABLE} (Default \code{FIXED}).}
+\item{lag}{a non-negative integer denoting a lower and upper bound for the the reconstruction delay (Default 1:1).}
 
-\item{M0}{a non-negative integer denoting a lower bound for the embedding dimension (Default 3).}
+\item{timelapse}{a character denoting if the time-series data are sampled at uniform time-frequency e.g., 1-month, 1-day, 1-hour, 30-min, 5-min, 1-min and so on \code{FIXED} or non-uniform time-frequency which are not equally spaced in time \code{VARIABLE} (Default \code{FIXED}).}
 
-\item{M1}{a non-negative integer denoting an upper bound for the embedding dimension (Default 10).}
+\item{h}{a non-negative integer denoting a lower and upper bound for the number of neurones (or nodes) in the single hidden layer (Default 2:10).}
 
-\item{H0}{a non-negative integer denoting a lower bound for the number of neurones in the hidden layer (Default 2).}
+\item{w0maxit}{a non-negative integer denoting the maximum iterations to estimate the initial parameter vector of the neural net models (Default 100).}
 
-\item{H1}{a non-negative integer denoting an upper bound for the number of neurones in the hidden layer (Default 10).}
+\item{wtsmaxit}{a non-negative integer denoting the maximum iterations to estimate the weights parameter vector of the neural net models (Default 1e6).}
 
-\item{I}{a non-negative integer denoting a number of neural networks iterations (Default 100).}
+\item{pre.white}{a logical value denoting if the user wants to use as points to evaluate the partial derivatives the delayed vectors filtered by the neural net model chosen \code{TRUE} or not \code{FALSE} (Default \code{TRUE}).}
 
-\item{lyapmethod}{a character denoting if you want to estimate the largest Lyapunov exponent \code{LLE}, the Lyapunov exponent spectrum \code{SLE} or both \code{ALL} (Default \code{LLE}).}
+\item{lyapmethod}{a character denoting the procedure chosen to estimate the Lyapunov exponent. If \code{LLE} has been selected the function will estimate only the largest Lyapunov exponent through the Norma-2 method. If \code{SLE} has been selected the function will estimate the Lyapunov exponent spectrum through the QR decomposition. Otherwise \code{ALL} has to be specified. In this case the function will estimate the Lyapunov exponent considering both procedures (Default \code{SLE}).}
 
-\item{blocking}{a character denoting if you consider the full sample \code{FULL}, the non-overlapping sample \code{NOVER}, the equally spaced sample \code{EQS}, the bootstrap sample \code{BOOT} or all of them \code{ALL} (Default \code{FULL}).}
+\item{blocking}{a character denoting the blocking method chosen for figuring out the Lyapunov exponent. Available options are \code{FULL} if the user considers the full sample, \code{NOVER} if the user considers the non-overlapping sample, \code{EQS} if the user considers the equally spaced sample, \code{BOOT} if the user considers the bootstrap sample or \code{ALL} if the user considers all of them (Default \code{BOOT}).}
 
-\item{pre.white}{a character denoting if you want to use as points to evaluate the partial derivatives the delayed vectors filtered by the neural network \code{TRUE} or not \code{FALSE} (Default \code{TRUE}).}
+\item{B}{a non-negative integer denoting the number of bootstrap iterations (Default 1000).}
 
-\item{B}{a non-negative integer denoting the number of bootstrap iterations (Default 100).}
+\item{trace}{a binary value denoting if the user wants to print the output on the console \code{1} or not \code{0} (Default 1).}
 
-\item{netplot}{a logical value denoting if you want to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} shows as many graphs as networks have been considered. Each of them represents the network structure by drawing the weights with positive values in black and the weights with negative values in grey. The thickness of the lines represents a greater or lesser value (Default \code{TRUE}).}
+\item{seed.t}{a logical value denoting if the user wants to fix the seed \code{TRUE} or not \code{FALSE} (Default TRUE).}
 
-\item{doplot}{a logical value denoting if you want to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} the evolution of the Lyapunov exponent values are represented for the whole period considering the lyapunov methods and the blocking methods selected by the user (Default \code{TRUE}).}
+\item{seed}{a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).}
+
+\item{doplot}{a logical value denoting if the user wants to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} the evolution of the Lyapunov exponent values are represented for the whole period considering the blocking method chosen by the user. It shows as many graphs as embedding dimensions have been considered (Default \code{TRUE}).}
 }
 \value{
-A list containing the largest Lyapunov exponent, the Lyapunov exponent spectrum or both for each neural network structure considered by keeping to \code{Lyapunov.net}. The dataset saved by each blocking method are the estimated Lyapunov exponent value, the standard error, the z-test value and the p-value. If the user chooses the non-overlapping sample, the equally spaced sample or the bootstrap sample the mean and median values of the Lyapunov exponent are showed. Also some details about the embedding dimension, the sample size, the block length and the block number are recorded.
+This function returns several objects considering the parameter set selected by the user. The largest Lyapunov exponent (Norma-2 procedure) and the Lyapunov exponent spectrum (QR decomposition procedure) by each blocking method are estimated. It also contains some useful information about the estimated jacobian, the best-fitted feed-forward single hidden layer neural net model, the best set of weights found, the fitted values, the residuals obtained, the best embedding parameters set chosen, the sample size or the block length considered by each blocking method. This function provides the standard error, the z test value and the p-value for testing the null hypothesis \eqn{H0: \lambda_k > 0 for k = 1,2,3, \ldots, m}. Reject the null hypothesis ${H_0}$ means lack of chaotic behaviour. That is, the data-generating process does not have a chaotic attractor because of it does not show the property of sensitivity to initial conditions.
 }
 \description{
-This function estimates both the largest Lyapunov exponent through the Norma-2 method and the Lyapunov exponent spectrum through the QR decomposition method taking into account the full sample and three different methods of subsampling by blocks considering the argument set selected by the user.
+This is an all-in-one function. It provides, at the same time, the delayed-coordinate embedding vector (\code{embedding}), estimates the best neural net model (\code{netfit}), calculates the partial derivatives directly from the chosen neural network model (\code{javcobian.net}). Finally, this function estimates both the largest Lyapunov exponent through the Norma-2 procedure (\code{lyapunov.max}) and the Lyapunov exponent spectrum through the QR decomposition procedure (\code{lyapunov.spec}) taking into account the full sample and three different methods of subsampling by blocks.
 }
-\details{
-If \code{FIXED} has been selected \code{x} must be a numeric vector or time serie. Otherwise \code{VARIABLE} has to be specified. In this case \code{x} must be a data frame or matrix with two columns. First, the date with the following format \code{YMD H:M:OS3} considering milliseconds e.g., 20190407 00:00:03.347. If you don't consider milliseconds you must put .000 after the seconds. It should be an object of class \code{Factor}. Second, the univariate time serie as a sequence of numerical values.
+\note{
+We have considered it appropriate to incorporate a function that unifies the whole process to make it easier and more intuitive for the R users. The DChaos package provides several ways to figure out robustly the neural net estimator of the k-th Lyapunov exponent. Particularly, there are 8 functions (one for each procedure and blocking method) which estimate the Lyapunov exponents consistently. Hence the DChaos package allows the R users to choose between two different procedures to obtain the neural net estimator of the k-th Lyapunov exponent and four ways of subsampling by blocks: full sample, non-overlapping sample, equally spaced sample and bootstrap sample. The blocking methods what they do is to split the time-series data into several blocks by estimating a Lyapunov exponent for each subsample. If the R users choose the non-overlapping sample (\code{blocking = "NOVER"}), the equally spaced sample (\code{blocking = "EQS"}) or the bootstrap sample (\code{blocking = "BOOT"}) the mean and median values of the Lyapunov exponent for each block or subsample are saved. By default we recommend using the median value as it is more robust to the presence of outliers. Notice that the parameter \code{B} will only be considered if the R users choose the bootstrap blocking method.
 }
 \examples{
-## We show below an example considering time series from the
-## logistic equation. We have estimated the Lyapunov exponent
-## spectrum by each blocking method for an embedding dimension (m=4).
-data<-logistic.ts(u.min=4,u.max=4,B=100,doplot=FALSE)
-ts<-data$`Logistic 100`$time.serie
-lyapu<-lyapunov(ts,lag=1,timelapse="FIXED",M0=4,M1=4,H0=2,H1=7,I=10,
-       lyapmethod="SLE",blocking="ALL",pre.white=TRUE,B=30,netplot=FALSE,
-       doplot=FALSE)
-show(lyapu$Lyapunov.net$Spectrum.full$Exponent)
-show(lyapu$Lyapunov.net$Spectrum.nonoverlap$Exponent)
-show(lyapu$Lyapunov.net$Spectrum.equally$Exponent)
-show(lyapu$Lyapunov.net$Spectrum.bootstrap$Exponent)
+## set.seed(34)
+## Simulates time-series data from the Logistic map with chaos
+## ts        <- DChaos::logistic.sim(n=1000, a=4)
+## show(head(ts, 5))
+
+## Provides the Lyapunov exponent spectrum by the QR decomposition procedure considering the
+## bootstrap blocking method directly from the Logistic map with chaos simulated.
+## exponent <- DChaos::lyapunov(ts, m=3:3, lag=1:1, timelapse="FIXED", h=2:10, w0maxit=100,
+##                     wtsmaxit=1e6, pre.white=TRUE, lyapmethod="SLE", blocking="ALL",
+##                     B=100, trace=1, seed.t=TRUE, seed=56666459, doplot=FALSE))
+## summmary(exponent)
 }
 \references{
 Ellner, S., Gallant, A., McCaffrey, D., Nychka, D. 1991 Convergence rates and data requirements for jacobian-based estimates of lyapunov exponents from data. Physics Letters A 153(6):357-363.
@@ -73,7 +87,7 @@ Whang, Y.J., Linton, O. 1999 The asymptotic distribution of nonparametric estima
 Shintani, M., Linton, O. 2004 Nonparametric neural network estimation of Lyapunov exponents and a direct test for chaos. Journal of Econometrics 120(1):1-33.
 }
 \seealso{
-\code{\link{embedding}}, \code{\link{jacobi}}, \code{\link{lyapunov.max}}, \code{\link{lyapunov.spec}}
+\code{\link{lyapunov.max}}, \code{\link{lyapunov.spec}}
 }
 \author{
 Julio E. Sandubete, Lorenzo Escot
