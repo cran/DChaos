@@ -21,7 +21,7 @@
 #'
 #' ## Summary method for a lyapunov object (only 1 method)
 #' ## jacobian <- DChaos::jacobian.net(data=ts, m=3:3, lag=1:1, timelapse="FIXED", h=2:10)
-#' ## exponent <- DChaos::lyapunov.spec(x=jacobian, blocking="BOOT", B=100, doplot=FALSE)
+#' ## exponent <- DChaos::lyapunov.spec(data=jacobian, blocking="BOOT", B=100, doplot=FALSE)
 #' ## summary(exponent)
 #'
 #' ## Summary method for a lyapunov object (> 1 method)
@@ -30,7 +30,7 @@
 #' ##                     B=100, trace=1, seed.t=TRUE, seed=56666459, doplot=FALSE))
 #' ## summmary(exponent)
 #' @author Julio E. Sandubete, Lorenzo Escot
-#' @exportMethod summary.lyapunov
+#' @export
 summary.lyapunov     <-  function(object, ...){
 
   if (object$nprint==0){

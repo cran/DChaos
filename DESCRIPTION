@@ -1,7 +1,7 @@
 Type: Package
 Package: DChaos
-Version: 0.1-4
-Date: 2020-05-04
+Version: 0.1-5
+Date: 2020-05-09
 Title: Chaotic Time Series Analysis
 Authors@R: c(person("Julio E.","Sandubete",
                    role=c("aut","cre"),
@@ -28,6 +28,6 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
 NeedsCompilation: no
-Packaged: 2020-05-04 18:16:08 UTC; julioemilioair
+Packaged: 2020-05-09 16:53:58 UTC; julioemilioair
 Repository: CRAN
-Date/Publication: 2020-05-04 21:50:11 UTC
+Date/Publication: 2020-05-10 06:50:02 UTC

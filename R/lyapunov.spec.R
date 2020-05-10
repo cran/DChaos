@@ -9,7 +9,7 @@
 #' @aliases lyapunov.spec
 #' @description
 #' This function estimates the Lyapunov exponent spectrum through the QR decomposition procedure based on the partial derivatives computed by the \code{jacobian.net} function.
-#' @param x a \code{matrix}, \code{data.frame} or \code{data.table} containing the partial derivatives computed by the \code{jacobian.net} function.
+#' @param data should be a \code{jacobian} object containing the partial derivatives computed by the \code{jacobian.net} function.
 #' @param blocking a character denoting the blocking method chosen for figuring out the Lyapunov exponent spectrum through the QR decomposition procedure. Available options are \code{FULL} if the user considers the full sample, \code{NOVER} if the user considers the non-overlapping sample, \code{EQS} if the user considers the equally spaced sample or \code{BOOT} if the user considers the bootstrap sample (Default \code{BOOT}).
 #' @param B a non-negative integer denoting the number of bootstrap iterations (Default 1000).
 #' @param doplot a logical value denoting if the user wants to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} the evolution of the Lyapunov exponent values are represented for the whole period considering the blocking method chosen by the user. It shows as many graphs as embedding dimensions have been considered (Default \code{TRUE}).
@@ -31,7 +31,7 @@
 #' ## derivatives showed in the jacobian.net example.
 #' ## jacobian <- DChaos::jacobian.net(data=ts, m=3:3, lag=1:1, timelapse="FIXED", h=2:10)
 #' ## summary(jacobian)
-#' ## exponent <- DChaos::lyapunov.spec(x=jacobian, blocking="BOOT", B=100, doplot=FALSE)
+#' ## exponent <- DChaos::lyapunov.spec(data=jacobian, blocking="BOOT", B=100, doplot=FALSE)
 #' ## summary(exponent)
 #' @author Julio E. Sandubete, Lorenzo Escot
 #' @importFrom pracma normest
@@ -44,16 +44,16 @@
 #' @importFrom graphics plot
 #' @importFrom stats median
 #' @export lyapunov.spec
-lyapunov.spec    <- function(x, blocking=c("BOOT","NOVER","EQS","FULL"), B=1000, doplot=TRUE){
+lyapunov.spec    <- function(data, blocking=c("BOOT","NOVER","EQS","FULL"), B=1000, doplot=TRUE){
 
   # Checks
-  if (is.null(x$jacobian)){stop("'x' should be a matrix or data frame containing the partial derivatives of the jacobian")}
-  if (is.matrix(x$jacobian) | is.data.frame(x$jacobian)){
+  if (is.null(data$jacobian)){stop("'data' should be a jacobian object")}
+  if (is.matrix(data$jacobian) | is.data.frame(data$jacobian)){
     if (is.null(blocking)){stop("'blocking' should be 'BOOT', 'NOVER', 'EQS' or 'FULL'")}
     if (B<1){stop("wrong value of bootstrap iterations")}
 
     # Settings
-    x <- x$jacobian
+    x <- data$jacobian
     N <- nrow(x)
     m <- ncol(x)
     blocking = match.arg(blocking)
@@ -506,13 +506,13 @@ lyapunov.spec    <- function(x, blocking=c("BOOT","NOVER","EQS","FULL"), B=1000,
     }
 
     # Class definition
-    LE <- c(x,LE,nprint=0)
+    LE <- c(data,LE,nprint=0)
     class(LE) <- "lyapunov"
 
     # Output
     return(LE)
   } else {
-    stop("'x' should be a matrix or data frame containing the partial derivatives of the jacobian")
+    stop("'data' should be should be a jacobian object")
   }
 }
 

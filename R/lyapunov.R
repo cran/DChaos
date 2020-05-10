@@ -76,83 +76,83 @@ lyapunov     <-  function(data, m=1:4, lag=1:1, timelapse=c("FIXED","VARIABLE"),
 
   # Estimates the Lyapunov exponent spectrum by each blocking method
   if(lyapmethod=="SLE" && blocking=="BOOT")
-    LE=lyapunov.spec(x=jacobian,blocking=blocking,B=B,doplot=doplot)
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
 
   if(lyapmethod=="SLE" && blocking=="NOVER")
-    LE=lyapunov.spec(x=jacobian,blocking=blocking,doplot=doplot)
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,doplot=doplot)
 
   if(lyapmethod=="SLE" && blocking=="EQS")
-    LE=lyapunov.spec(x=jacobian,blocking=blocking,doplot=doplot)
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,doplot=doplot)
 
   if(lyapmethod=="SLE" && blocking=="FULL")
-    LE=lyapunov.spec(x=jacobian,blocking=blocking,doplot=doplot)
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,doplot=doplot)
 
   if(lyapmethod=="SLE" && blocking=="ALL"){
-    exponent.boot=lyapunov.spec(x=jacobian,blocking="BOOT",B=B,doplot=doplot)
-    exponent.nover=lyapunov.spec(x=jacobian,blocking="NOVER",doplot=doplot)
-    exponent.eqs=lyapunov.spec(x=jacobian,blocking="EQS",doplot=doplot)
-    exponent.full=lyapunov.spec(x=jacobian,blocking="FULL",doplot=doplot)
+    exponent.boot=lyapunov.spec(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    exponent.nover=lyapunov.spec(data=jacobian,blocking="NOVER",doplot=doplot)
+    exponent.eqs=lyapunov.spec(data=jacobian,blocking="EQS",doplot=doplot)
+    exponent.full=lyapunov.spec(data=jacobian,blocking="FULL",doplot=doplot)
     LE <- c(jacobian,exponent.boot=list(exponent.boot[c(21:27)]),exponent.nover=list(exponent.nover[c(21:27)]),
             exponent.eqs=list(exponent.eqs[c(21:27)]),exponent.full=list(exponent.full[c(21:26)]),nprint=1)
   }
 
   # Estimates the largest Lyapunov Exponent by each blocking method
   if(lyapmethod=="LLE" && blocking=="BOOT")
-    LE=lyapunov.max(x=jacobian,blocking=blocking,B=B,doplot=doplot)
+    LE=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
 
   if(lyapmethod=="LLE" && blocking=="NOVER")
-    LE=lyapunov.max(x=jacobian,blocking=blocking,doplot=doplot)
+    LE=lyapunov.max(data=jacobian,blocking=blocking,doplot=doplot)
 
   if(lyapmethod=="LLE" && blocking=="EQS")
-    LE=lyapunov.max(x=jacobian,blocking=blocking,doplot=doplot)
+    LE=lyapunov.max(data=jacobian,blocking=blocking,doplot=doplot)
 
   if(lyapmethod=="LLE" && blocking=="FULL")
-    LE=lyapunov.max(x=jacobian,blocking=blocking,doplot=doplot)
+    LE=lyapunov.max(data=jacobian,blocking=blocking,doplot=doplot)
 
   if(lyapmethod=="LLE" && blocking=="ALL"){
-    exponent.boot=lyapunov.max(x=jacobian,blocking="BOOT",B=B,doplot=doplot)
-    exponent.nover=lyapunov.max(x=jacobian,blocking="NOVER",doplot=doplot)
-    exponent.eqs=lyapunov.max(x=jacobian,blocking="EQS",doplot=doplot)
-    exponent.full=lyapunov.max(x=jacobian,blocking="FULL",doplot=doplot)
+    exponent.boot=lyapunov.max(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    exponent.nover=lyapunov.max(data=jacobian,blocking="NOVER",doplot=doplot)
+    exponent.eqs=lyapunov.max(data=jacobian,blocking="EQS",doplot=doplot)
+    exponent.full=lyapunov.max(data=jacobian,blocking="FULL",doplot=doplot)
     LE <- c(jacobian,exponent.boot=list(exponent.boot[c(21:27)]),exponent.nover=list(exponent.nover[c(21:27)]),
             exponent.eqs=list(exponent.eqs[c(21:27)]),exponent.full=list(exponent.full[c(21:26)]),nprint=1)
   }
 
   # Estimates both estimators by each blocking method
   if(lyapmethod=="ALL" && blocking=="BOOT"){
-    exponent.spec=lyapunov.spec(x=jacobian,blocking=blocking,B=B,doplot=doplot)
-    exponent.max=lyapunov.max(x=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
     LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:27)]),exponent.max=list(exponent.max[c(21:27)]),nprint=1)
   }
 
   if(lyapmethod=="ALL" && blocking=="NOVER"){
-    exponent.spec=lyapunov.spec(x=jacobian,blocking=blocking,B=B,doplot=doplot)
-    exponent.max=lyapunov.max(x=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
     LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:27)]),exponent.max=list(exponent.max[c(21:27)]),nprint=1)
   }
 
   if(lyapmethod=="ALL" && blocking=="EQS"){
-    exponent.spec=lyapunov.spec(x=jacobian,blocking=blocking,B=B,doplot=doplot)
-    exponent.max=lyapunov.max(x=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
     LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:27)]),exponent.max=list(exponent.max[c(21:27)]),nprint=1)
   }
 
   if(lyapmethod=="ALL" && blocking=="FULL"){
-    exponent.spec=lyapunov.spec(x=jacobian,blocking=blocking,B=B,doplot=doplot)
-    exponent.max=lyapunov.max(x=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
     LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:26)]),exponent.max=list(exponent.max[c(21:26)]),nprint=1)
   }
 
   # Estimates both estimators by al blocking methods
   if(lyapmethod=="ALL" && blocking=="ALL"){
-    lyapspec.boot=lyapunov.spec(x=jacobian,blocking="BOOT",B=B,doplot=doplot)
-    lyapspec.nover=lyapunov.spec(x=jacobian,blocking="NOVER",doplot=doplot)
-    lyapspec.eqs=lyapunov.spec(x=jacobian,blocking="EQS",doplot=doplot)
-    lyapspec.full=lyapunov.spec(x=jacobian,blocking="FULL",doplot=doplot)
-    lyapmax.boot=lyapunov.max(x=jacobian,blocking="BOOT",B=B,doplot=doplot)
-    lyapmax.nover=lyapunov.max(x=jacobian,blocking="NOVER",doplot=doplot)
-    lyapmax.eqs=lyapunov.max(x=jacobian,blocking="EQS",doplot=doplot)
-    lyapmax.full=lyapunov.max(x=jacobian,blocking="FULL",doplot=doplot)
+    lyapspec.boot=lyapunov.spec(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    lyapspec.nover=lyapunov.spec(data=jacobian,blocking="NOVER",doplot=doplot)
+    lyapspec.eqs=lyapunov.spec(data=jacobian,blocking="EQS",doplot=doplot)
+    lyapspec.full=lyapunov.spec(data=jacobian,blocking="FULL",doplot=doplot)
+    lyapmax.boot=lyapunov.max(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    lyapmax.nover=lyapunov.max(data=jacobian,blocking="NOVER",doplot=doplot)
+    lyapmax.eqs=lyapunov.max(data=jacobian,blocking="EQS",doplot=doplot)
+    lyapmax.full=lyapunov.max(data=jacobian,blocking="FULL",doplot=doplot)
     LE <- c(jacobian,lyapspec.boot=list(lyapspec.boot[c(21:27)]),lyapmax.boot=list(lyapmax.boot[c(21:27)]),
             lyapspec.nover=list(lyapspec.nover[c(21:27)]),lyapmax.nover=list(lyapmax.nover[c(21:27)]),
             lyapspec.eqs=list(lyapspec.boot[c(21:27)]),lyapmax.eqs=list(lyapmax.boot[c(21:27)]),

@@ -5,14 +5,14 @@
 \title{Estimates the largest Lyapunov exponent}
 \usage{
 lyapunov.max(
-  x,
+  data,
   blocking = c("BOOT", "NOVER", "EQS", "FULL"),
   B = 1000,
   doplot = TRUE
 )
 }
 \arguments{
-\item{x}{a \code{matrix}, \code{data.frame} or \code{data.table} containing the partial derivatives computed by the \code{jacobian.net} function.}
+\item{data}{should be a \code{jacobian} object containing the partial derivatives computed by the \code{jacobian.net} function.}
 
 \item{blocking}{a character denoting the blocking method chosen for figuring out the largest Lyapunov exponent through the Norma-2 procedure. Available options are \code{FULL} if the user considers the full sample, \code{NOVER} if the user considers the non-overlapping sample, \code{EQS} if the user considers the equally spaced sample or \code{BOOT} if the user considers the bootstrap sample (Default \code{BOOT}).}
 
@@ -40,7 +40,7 @@ The DChaos package provides several ways to figure out robustly the neural net e
 ## derivatives showed in the jacobian.net example.
 ## jacobian <- DChaos::jacobian.net(data=ts, m=3:3, lag=1:1, timelapse="FIXED", h=2:10)
 ## summary(jacobian)
-## exponent <- DChaos::lyapunov.max(x=jacobian, blocking="BOOT", B=100, doplot=FALSE)
+## exponent <- DChaos::lyapunov.max(data=jacobian, blocking="BOOT", B=100, doplot=FALSE)
 ## summary(exponent)
 }
 \references{
