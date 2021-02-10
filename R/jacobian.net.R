@@ -21,6 +21,7 @@
 #' @param trace a binary value denoting if the user wants to print the output on the console \code{1} or not \code{0} (Default 1).
 #' @param seed.t a logical value denoting if the user wants to fix the seed \code{TRUE} or not \code{FALSE} (Default TRUE).
 #' @param seed a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).
+#' @param ... further arguments passed to or from \code{nnet} function.
 #' @return This function returns several objects considering the parameter set selected by the user. Partial derivatives are calculated analytically from the best-fitted neural net model. It also contains some useful information about the best-fitted feed-forward single hidden layer neural net model saved, the best set of weights found, the fitted values, the residuals obtained or the best embedding parameters set chosen. This function allows the R user uses the data previously obtained from the best-fitted neural network estimated by the \code{netfit} function if \code{model} is not empty. Otherwise \code{data} has to be specified.
 #' @note The main reason for using neural network models is not to look for the best predictive model but to estimate a model that captures the non-linear time dependence well enough and, additionally, allows us to obtain in an analytical way (instead of numerical) the jacobian functional of the unknown underlying generator system. The estimation of this jacobian or partial derivatives will later allow us to contrast our hypothesis of chaos estimating the Lyapunov exponents.
 #' @references Eckmann, J.P., Ruelle, D. 1985 Ergodic theory of chaos and strange attractors. Rev Mod Phys 57:617–656.
@@ -46,43 +47,43 @@
 #' @importFrom utils setTxtProgressBar
 #' @importFrom nnet nnet
 #' @export jacobian.net
-jacobian.net     <- function(model, data, m=1:4, lag=1:1, timelapse=c("FIXED","VARIABLE"), h=2:10, w0maxit=100, wtsmaxit=1e6, pre.white=TRUE, trace=1, seed.t=TRUE, seed=56666459){
+jacobian.net <- function(model, data, m = 1:4, lag = 1:1, timelapse = c("FIXED", "VARIABLE"), h = 2:10, w0maxit = 100, wtsmaxit = 1e6, pre.white = TRUE, trace = 1, seed.t = TRUE, seed = 56666459, ...) {
 
   # Checks
-  if(missing(model)){
-    model      <- netfit(serie=data, m=m, lag=lag, timelapse = timelapse, h=h, w0maxit=w0maxit, wtsmaxit=wtsmaxit, trace=trace, seed.t=seed.t, seed=seed)
+  if (missing(model)) {
+    model <- netfit(serie = data, m = m, lag = lag, timelapse = timelapse, h = h, w0maxit = w0maxit, wtsmaxit = wtsmaxit, trace = trace, seed.t = seed.t, seed = seed, ...)
   }
 
   # Settings
-  m            <- model$n[1]
-  h            <- model$n[2]
-  w            <- model$wts
-  xo.net       <- as.matrix(model$emb.x)
-  n            <- nrow(xo.net)
-  z            <- matrix(nrow = n,ncol=h)
-  dphi         <- matrix(nrow = n,ncol=h)
-  zout         <- matrix(nrow = n,ncol=h)
-  dzout        <- matrix(nrow = n,ncol=m)
-  wout         <- c()
-  wz           <- c()
+  m <- model$n[1]
+  h <- model$n[2]
+  w <- model$wts
+  xo.net <- as.matrix(model$emb.x)
+  n <- nrow(xo.net)
+  z <- matrix(nrow = n, ncol = h)
+  dphi <- matrix(nrow = n, ncol = h)
+  zout <- matrix(nrow = n, ncol = h)
+  dzout <- matrix(nrow = n, ncol = m)
+  wout <- c()
+  wz <- c()
 
   # Calculation and evaluation of partial derivatives (analytically)
-  for (i in 1:h){
-    z[,i]      <- w[i+(i-1)*m]+xo.net%*%w[(i+(i-1)*m+1):((i+(i-1)*m)+m)]
-    dphi[,i]   <- exp(z[,i])/(1+exp(z[,i]))^2
-    wout[i]    <- w[h+1+i+h*m]
-    zout[,i]   <- dphi[,i]*wout[i]
+  for (i in 1:h) {
+    z[, i] <- w[i + (i - 1) * m] + xo.net %*% w[(i + (i - 1) * m + 1):((i + (i - 1) * m) + m)]
+    dphi[, i] <- exp(z[, i]) / (1 + exp(z[, i]))^2
+    wout[i] <- w[h + 1 + i + h * m]
+    zout[, i] <- dphi[, i] * wout[i]
   }
-  for (j in 1:m){
-    for(s in 1:h){
-      wz[s]    <- w[(s-1)*m+(s-1)+(j+1)]
-      wzout    <- cbind(wz)
+  for (j in 1:m) {
+    for (s in 1:h) {
+      wz[s] <- w[(s - 1) * m + (s - 1) + (j + 1)]
+      wzout <- cbind(wz)
     }
-    dzout[,j]  <- zout%*%wzout
+    dzout[, j] <- zout %*% wzout
   }
-  dzout          <- as.data.frame(dzout[complete.cases(dzout),])
-  colnames(dzout)<- paste0("dx", 1:m)
-  model          <- c(model,jacobian=list(dzout))
+  dzout <- as.data.frame(dzout[complete.cases(dzout), ])
+  colnames(dzout) <- paste0("dx", 1:m)
+  model <- c(model, jacobian = list(dzout))
 
   # Class definition
   class(model) <- "nnet"

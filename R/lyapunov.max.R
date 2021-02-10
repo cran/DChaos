@@ -43,307 +43,319 @@
 #' @importFrom graphics par
 #' @importFrom stats median
 #' @export lyapunov.max
-lyapunov.max     <- function(data, blocking=c("BOOT","NOVER","EQS","FULL"), B=1000, doplot=TRUE){
+lyapunov.max <- function(data, blocking = c("BOOT", "NOVER", "EQS", "FULL"), B = 1000, doplot = TRUE) {
 
   # Checks
-  if (is.null(data$jacobian)){stop("'data' should be a jacobian object")}
-  if (is.matrix(data$jacobian) | is.data.frame(data$jacobian)){
-  if (is.null(blocking)){stop("'blocking' should be 'BOOT', 'NOVER', 'EQS' or 'FULL'")}
-  if (B<1){stop("wrong value of bootstrap iterations")}
+  if (is.null(data$jacobian)) {
+    stop("'data' should be a jacobian object")
+  }
+  if (is.matrix(data$jacobian) | is.data.frame(data$jacobian)) {
+    if (is.null(blocking)) {
+      stop("'blocking' should be 'BOOT', 'NOVER', 'EQS' or 'FULL'")
+    }
+    if (B < 1) {
+      stop("wrong value of bootstrap iterations")
+    }
 
     # Settings
     x <- data$jacobian
     N <- nrow(x)
     m <- ncol(x)
-    blocking = match.arg(blocking)
+    blocking <- match.arg(blocking)
+    bar <- utils::txtProgressBar(min = 0, max = B, style = 3)
 
     # Estimates the Lyapunov Exponent: Bootstrap sample
-    if (blocking == "BOOT"){
-      lyap_max_boot<-function(x,B=100,doplot=TRUE){
+    if (blocking == "BOOT") {
+      lyap_max_boot <- function(x, B = 100, doplot = TRUE) {
 
         # Lyapunov exponents
-        M<-trunc(36.2*(N/log(N))^(1/6))
-        B<-B
-        lvmax<-matrix(0,M,B)
-        for (b in 1:B){
-          J<-matrix(0,m,m)
-          TM<-diag(1,m)
-          v<-matrix(0,m,1)
-          v[1,1]<-1
-          j<-0
-          mboostsample <- sort(sample(N, M,replace=FALSE))
-          for (i in mboostsample){
-            j<-j+1
-            J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
-            if (any(is.nan(J[1,])) | any(is.infinite(J[1,]))){
-              lvmax[j,b]<-lvmax[j-1,b]
+        M <- trunc(36.2 * (N / log(N))^(1 / 6))
+        B <- B
+        lvmax <- matrix(0, M, B)
+        for (b in 1:B) {
+          J <- matrix(0, m, m)
+          TM <- diag(1, m)
+          v <- matrix(0, m, 1)
+          v[1, 1] <- 1
+          j <- 0
+          mboostsample <- sort(sample(N, M, replace = FALSE))
+          for (i in mboostsample) {
+            j <- j + 1
+            J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
+            if (any(is.nan(J[1, ])) | any(is.infinite(J[1, ]))) {
+              lvmax[j, b] <- lvmax[j - 1, b]
             } else {
-              TM<-J%*%TM
-              lvmax[j,b]<-(1/j)*log(max(svd(TM%*%v)$d))
+              TM <- J %*% TM
+              lvmax[j, b] <- (1 / j) * log(max(svd(TM %*% v)$d))
             }
           }
+          utils::setTxtProgressBar(bar, b)
         }
 
         # Plots
-        if (doplot==TRUE){
-          par(mfrow=c(1,1))
-          lvmax.mean<-c()
-          plot(lvmax[,1],ylim=c(min(lvmax[1:M,]),max(lvmax[1:M,])),type="l",xlab="Block length", ylab = "Values",main=paste("Largest Lyapunov exponent\n","Bootstrap sample | m","=",m,""),col="darkgray")
-          abline(h=0,col="steelblue")
-          for (b in 2:B){
-            lines(lvmax[,b],type="l",col="darkgray")
+        if (doplot == TRUE) {
+          par(mfrow = c(1, 1))
+          lvmax.mean <- c()
+          plot(lvmax[, 1], ylim = c(min(lvmax[1:M, ]), max(lvmax[1:M, ])), type = "l", xlab = "Block length", ylab = "Values", main = paste("Largest Lyapunov exponent\n", "Bootstrap sample | m", "=", m, ""), col = "darkgray")
+          abline(h = 0, col = "steelblue")
+          for (b in 2:B) {
+            lines(lvmax[, b], type = "l", col = "darkgray")
           }
-          for (a in 1:M){
-            lvmax.mean[a]<-mean(lvmax[a,c(1:B)])
+          for (a in 1:M) {
+            lvmax.mean[a] <- mean(lvmax[a, c(1:B)])
           }
-          lines(lvmax.mean,type="l",col="indianred1")
+          lines(lvmax.mean, type = "l", col = "indianred1")
         }
 
         # Eta errors
-        etalvmax<-pracma::zeros(M,B)
-        for (b in 1:B){
-          etalvmax[1,b]<-lvmax[1,b]-lvmax[M,b]
-          for (j in 2:M){
-            etalvmax[j,b]<-j*lvmax[j,b]-(j-1)*lvmax[j-1,b]-lvmax[M,b]
+        etalvmax <- pracma::zeros(M, B)
+        for (b in 1:B) {
+          etalvmax[1, b] <- lvmax[1, b] - lvmax[M, b]
+          for (j in 2:M) {
+            etalvmax[j, b] <- j * lvmax[j, b] - (j - 1) * lvmax[j - 1, b] - lvmax[M, b]
           }
         }
 
         # Long-run variance of the eta's mean
-        varmax<-pracma::zeros(1,B)
-        for (b in 1:B){
-          varmax[1,b]<-(sandwich::lrvar(etalvmax[,b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE))^0.5
+        varmax <- pracma::zeros(1, B)
+        for (b in 1:B) {
+          varmax[1, b] <- (sandwich::lrvar(etalvmax[, b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = FALSE))^0.5
         }
 
         # Hypothesis contrast
         # Mean value
-        lvmax_mean<-mean(lvmax[M,abs(outliers::scores(lvmax[M,], type = c("iqr")))<1.5])
-        sdlvmax_mean<-mean(varmax[1,abs(outliers::scores(varmax[1,], type = c("iqr")))<1.5])
-        Ztestmax_mean<-lvmax_mean/(sdlvmax_mean/sqrt(M))
-        p.value.max_mean<-pnorm(Ztestmax_mean)
+        lvmax_mean <- mean(lvmax[M, abs(outliers::scores(lvmax[M, ], type = c("iqr"))) < 1.5])
+        sdlvmax_mean <- mean(varmax[1, abs(outliers::scores(varmax[1, ], type = c("iqr"))) < 1.5])
+        Ztestmax_mean <- lvmax_mean / (sdlvmax_mean / sqrt(M))
+        p.value.max_mean <- pnorm(Ztestmax_mean)
 
         # Median value
-        lvmax_median<-median(lvmax[M,])
-        sdlvmax_median<-median(varmax[1,])
-        Ztestmax_median<-lvmax_median/(sdlvmax_median/sqrt(M))
-        p.value.max_median<-pnorm(Ztestmax_median)
+        lvmax_median <- median(lvmax[M, ])
+        sdlvmax_median <- median(varmax[1, ])
+        Ztestmax_median <- lvmax_median / (sdlvmax_median / sqrt(M))
+        p.value.max_median <- pnorm(Ztestmax_median)
 
         # Output
-        LE<-list("estimator"=c("Largest Lyapunov exponent"),"procedure"=c("Norma-2 by bootstrap blocking method"),
-                 "exponent.mean"=matrix(c(lvmax_mean,sdlvmax_mean,Ztestmax_mean,p.value.max_mean),nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "exponent.median"=matrix(c(lvmax_median,sdlvmax_median,Ztestmax_median,p.value.max_median),nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "sample"=N,"block.length"=M,"no.block"=B
+        LE <- list(
+          "estimator" = c("Largest Lyapunov exponent"), "procedure" = c("Norma-2 by bootstrap blocking method"),
+          "exponent.mean" = matrix(c(lvmax_mean, sdlvmax_mean, Ztestmax_mean, p.value.max_mean), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "exponent.median" = matrix(c(lvmax_median, sdlvmax_median, Ztestmax_median, p.value.max_median), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "sample" = N, "block.length" = M, "no.block" = B
         )
         return(LE)
       }
-      LE = lyap_max_boot(x,B=B,doplot=doplot)
+      LE <- lyap_max_boot(x, B = B, doplot = doplot)
     }
 
     # Estimates the Lyapunov Exponent: Non-overlapping sample
-    if (blocking == "NOVER"){
-      lyap_max_over<-function(x,doplot=TRUE){
+    if (blocking == "NOVER") {
+      lyap_max_over <- function(x, doplot = TRUE) {
 
         # Lyapunov exponents
-        M<-trunc(36.2*(N/log(N))^(1/6))
-        B<-floor(N/M)
-        lvmax<-matrix(0,M,B)
-        for (b in 1:B){
-          J<-matrix(0,m,m)
-          TM<-diag(1,m)
-          v<-matrix(0,m,1)
-          v[1,1]<-1
-          for (i in (1+(b-1)*M):(b*M)){
-            J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
-            if (any(is.nan(J[1,])) | any(is.infinite(J[1,]))){
-              lvmax[i-(b-1)*M,b]<-lvmax[i-1-(b-1)*M,b]
+        M <- trunc(36.2 * (N / log(N))^(1 / 6))
+        B <- floor(N / M)
+        lvmax <- matrix(0, M, B)
+        for (b in 1:B) {
+          J <- matrix(0, m, m)
+          TM <- diag(1, m)
+          v <- matrix(0, m, 1)
+          v[1, 1] <- 1
+          for (i in (1 + (b - 1) * M):(b * M)) {
+            J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
+            if (any(is.nan(J[1, ])) | any(is.infinite(J[1, ]))) {
+              lvmax[i - (b - 1) * M, b] <- lvmax[i - 1 - (b - 1) * M, b]
             } else {
-              TM<-J%*%TM
-              lvmax[i-(b-1)*M,b]<-(1/(i-(b-1)*M))*log(max(svd(TM%*%v)$d))
+              TM <- J %*% TM
+              lvmax[i - (b - 1) * M, b] <- (1 / (i - (b - 1) * M)) * log(max(svd(TM %*% v)$d))
             }
           }
         }
 
         # Plots
-        if (doplot==TRUE){
-          par(mfrow=c(1,1))
-          plot(lvmax[,1],ylim=c(min(lvmax[1:M,]),max(lvmax[1:M,])),type="l",xlab="Block length", ylab = "Values",main=paste("Largest Lyapunov exponent\n","Non-overlapping sample | m","=",m,""),col="darkgray")
-          abline(h=0,col="steelblue")
-          for (b in 2:B){
-            lines(lvmax[,b],type="l",col="darkgray")
+        if (doplot == TRUE) {
+          par(mfrow = c(1, 1))
+          plot(lvmax[, 1], ylim = c(min(lvmax[1:M, ]), max(lvmax[1:M, ])), type = "l", xlab = "Block length", ylab = "Values", main = paste("Largest Lyapunov exponent\n", "Non-overlapping sample | m", "=", m, ""), col = "darkgray")
+          abline(h = 0, col = "steelblue")
+          for (b in 2:B) {
+            lines(lvmax[, b], type = "l", col = "darkgray")
           }
         }
 
         # Eta errors
-        etalvmax<-pracma::zeros(M,B)
-        for (b in 1:B){
-          etalvmax[1,b]<-lvmax[1,b]-lvmax[M,b]
-          for (j in 2:M){
-            etalvmax[j,b]<-j*lvmax[j,b]-(j-1)*lvmax[j-1,b]-lvmax[M,b]
+        etalvmax <- pracma::zeros(M, B)
+        for (b in 1:B) {
+          etalvmax[1, b] <- lvmax[1, b] - lvmax[M, b]
+          for (j in 2:M) {
+            etalvmax[j, b] <- j * lvmax[j, b] - (j - 1) * lvmax[j - 1, b] - lvmax[M, b]
           }
         }
 
         # Long-run variance of the eta's mean
-        varmax<-pracma::zeros(1,B)
-        for (b in 1:B){
-          varmax[1,b]<-(sandwich::lrvar(etalvmax[,b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE))^0.5
+        varmax <- pracma::zeros(1, B)
+        for (b in 1:B) {
+          varmax[1, b] <- (sandwich::lrvar(etalvmax[, b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = FALSE))^0.5
         }
 
         # Hypothesis contrast
         # Mean value
-        lvmax_mean<-mean(lvmax[M,])
-        sdlvmax_mean<-mean(varmax[1,])
-        Ztestmax_mean<-lvmax_mean/(sdlvmax_mean/sqrt(M))
-        p.value.max_mean<-pnorm(Ztestmax_mean)
+        lvmax_mean <- mean(lvmax[M, ])
+        sdlvmax_mean <- mean(varmax[1, ])
+        Ztestmax_mean <- lvmax_mean / (sdlvmax_mean / sqrt(M))
+        p.value.max_mean <- pnorm(Ztestmax_mean)
 
         # Median value
-        lvmax_median<-median(lvmax[M,])
-        sdlvmax_median<-median(varmax[1,])
-        Ztestmax_median<-lvmax_median/(sdlvmax_median/sqrt(M))
-        p.value.max_median<-pnorm(Ztestmax_median)
+        lvmax_median <- median(lvmax[M, ])
+        sdlvmax_median <- median(varmax[1, ])
+        Ztestmax_median <- lvmax_median / (sdlvmax_median / sqrt(M))
+        p.value.max_median <- pnorm(Ztestmax_median)
 
         # Output
-        LE<-list("estimator"=c("Largest Lyapunov exponent"),"procedure"=c("Norma-2 by non-overlapping blocking method"),
-                 "exponent.mean"=matrix(c(lvmax_mean,sdlvmax_mean,Ztestmax_mean,p.value.max_mean),nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "exponent.median"=matrix(c(lvmax_median,sdlvmax_median,Ztestmax_median,p.value.max_median),nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "sample"=N,"block.length"=M,"no.block"=B
+        LE <- list(
+          "estimator" = c("Largest Lyapunov exponent"), "procedure" = c("Norma-2 by non-overlapping blocking method"),
+          "exponent.mean" = matrix(c(lvmax_mean, sdlvmax_mean, Ztestmax_mean, p.value.max_mean), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "exponent.median" = matrix(c(lvmax_median, sdlvmax_median, Ztestmax_median, p.value.max_median), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "sample" = N, "block.length" = M, "no.block" = B
         )
         return(LE)
       }
-      LE = lyap_max_over(x,doplot=doplot)
+      LE <- lyap_max_over(x, doplot = doplot)
     }
 
     # Estimates the Lyapunov Exponent: Equally spaced sample
-    if (blocking == "EQS"){
-      lyap_max_ess<-function(x,doplot=TRUE){
+    if (blocking == "EQS") {
+      lyap_max_ess <- function(x, doplot = TRUE) {
 
         # Lyapunov exponents
-        M<-trunc(36.2*(N/log(N))^(1/6))
-        B<-floor(N/M)
-        lvmax<-matrix(0,M,B)
-        for (b in 1:B){
-          J<-matrix(0,m,m)
-          TM<-diag(1,m)
-          v<-matrix(0,m,1)
-          v[1,1]<-1
-          j<-0
-          for (i in seq(from=b,to=(B*M), by=B)){
-            j<-j+1
-            J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
-            if (any(is.nan(J[1,])) | any(is.infinite(J[1,]))){
-              lvmax[j,b]<-lvmax[j-1,b]
+        M <- trunc(36.2 * (N / log(N))^(1 / 6))
+        B <- floor(N / M)
+        lvmax <- matrix(0, M, B)
+        for (b in 1:B) {
+          J <- matrix(0, m, m)
+          TM <- diag(1, m)
+          v <- matrix(0, m, 1)
+          v[1, 1] <- 1
+          j <- 0
+          for (i in seq(from = b, to = (B * M), by = B)) {
+            j <- j + 1
+            J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
+            if (any(is.nan(J[1, ])) | any(is.infinite(J[1, ]))) {
+              lvmax[j, b] <- lvmax[j - 1, b]
             } else {
-              TM<-J%*%TM
-              lvmax[j,b]<-(1/j)*log(max(svd(TM%*%v)$d))
+              TM <- J %*% TM
+              lvmax[j, b] <- (1 / j) * log(max(svd(TM %*% v)$d))
             }
           }
         }
 
         # Plots
-        if (doplot==TRUE){
-          par(mfrow=c(1,1))
-          plot(lvmax[,1],ylim=c(min(lvmax[1:M,]),max(lvmax[1:M,])),type="l",xlab="Block length", ylab = "Values",main=paste("Largest Lyapunov exponent\n","Equally spaced sample | m","=",m,""),col="darkgray")
-          abline(h=0,col="steelblue")
-          for (b in 2:B){
-            lines(lvmax[,b],type="l",col="darkgray")
+        if (doplot == TRUE) {
+          par(mfrow = c(1, 1))
+          plot(lvmax[, 1], ylim = c(min(lvmax[1:M, ]), max(lvmax[1:M, ])), type = "l", xlab = "Block length", ylab = "Values", main = paste("Largest Lyapunov exponent\n", "Equally spaced sample | m", "=", m, ""), col = "darkgray")
+          abline(h = 0, col = "steelblue")
+          for (b in 2:B) {
+            lines(lvmax[, b], type = "l", col = "darkgray")
           }
         }
 
         # Eta errors
-        etalvmax<-pracma::zeros(M,B)
-        for (b in 1:B){
-          etalvmax[1,b]<-lvmax[1,b]-lvmax[M,b]
-          for (j in 2:M){
-            etalvmax[j,b]<-j*lvmax[j,b]-(j-1)*lvmax[j-1,b]-lvmax[M,b]
+        etalvmax <- pracma::zeros(M, B)
+        for (b in 1:B) {
+          etalvmax[1, b] <- lvmax[1, b] - lvmax[M, b]
+          for (j in 2:M) {
+            etalvmax[j, b] <- j * lvmax[j, b] - (j - 1) * lvmax[j - 1, b] - lvmax[M, b]
           }
         }
 
         # Long-run variance of the eta's mean
-        varmax<-pracma::zeros(1,B)
-        for (b in 1:B){
-          varmax[1,b]<-(sandwich::lrvar(etalvmax[,b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=FALSE))^0.5
+        varmax <- pracma::zeros(1, B)
+        for (b in 1:B) {
+          varmax[1, b] <- (sandwich::lrvar(etalvmax[, b], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = FALSE))^0.5
         }
 
         # Hypothesis contrast
         # Mean value
-        lvmax_mean<-mean(lvmax[M,])
-        sdlvmax_mean<-mean(varmax[1,])
-        Ztestmax_mean<-lvmax_mean/(sdlvmax_mean/sqrt(M))
-        p.value.max_mean<-pnorm(Ztestmax_mean)
+        lvmax_mean <- mean(lvmax[M, ])
+        sdlvmax_mean <- mean(varmax[1, ])
+        Ztestmax_mean <- lvmax_mean / (sdlvmax_mean / sqrt(M))
+        p.value.max_mean <- pnorm(Ztestmax_mean)
 
         # Median value
-        lvmax_median<-median(lvmax[M,])
-        sdlvmax_median<-median(varmax[1,])
-        Ztestmax_median<-lvmax_median/(sdlvmax_median/sqrt(M))
-        p.value.max_median<-pnorm(Ztestmax_median)
+        lvmax_median <- median(lvmax[M, ])
+        sdlvmax_median <- median(varmax[1, ])
+        Ztestmax_median <- lvmax_median / (sdlvmax_median / sqrt(M))
+        p.value.max_median <- pnorm(Ztestmax_median)
 
         # Output
-        LE<-list("estimator"=c("Largest Lyapunov exponent"),"procedure"=c("Norma-2 by equally spaced blocking method"),
-                 "exponent.mean"=matrix(c(lvmax_mean,sdlvmax_mean,Ztestmax_mean,p.value.max_mean),nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "exponent.median"=matrix(c(lvmax_median,sdlvmax_median,Ztestmax_median,p.value.max_median),nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "sample"=N,"block.length"=M,"no.block"=B
+        LE <- list(
+          "estimator" = c("Largest Lyapunov exponent"), "procedure" = c("Norma-2 by equally spaced blocking method"),
+          "exponent.mean" = matrix(c(lvmax_mean, sdlvmax_mean, Ztestmax_mean, p.value.max_mean), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "exponent.median" = matrix(c(lvmax_median, sdlvmax_median, Ztestmax_median, p.value.max_median), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "sample" = N, "block.length" = M, "no.block" = B
         )
         return(LE)
       }
-      LE = lyap_max_ess(x,doplot=doplot)
+      LE <- lyap_max_ess(x, doplot = doplot)
     }
 
     # Estimates the Lyapunov Exponent: Full sample
-    if (blocking == "FULL"){
-      lyap_max_full<-function(x,doplot=TRUE){
+    if (blocking == "FULL") {
+      lyap_max_full <- function(x, doplot = TRUE) {
 
         # Lyapunov exponents
-        lvmax<-matrix(0,N,1)
-        J<-matrix(0,m,m)
-        TM<-diag(1,m)
-        v<-matrix(0,m,1)
-        v[1,1]<-1
-        for (i in 1:N){
-          J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
-          TM0<-TM
-          TM<-J%*%TM
-          norsal<-try(pracma::normest(TM%*%v),silent = FALSE)
-          if('try-error' %in% class(norsal)){
-            TM<-TM0
-            lvmax[i]<-lvmax[i-1]
+        lvmax <- matrix(0, N, 1)
+        J <- matrix(0, m, m)
+        TM <- diag(1, m)
+        v <- matrix(0, m, 1)
+        v[1, 1] <- 1
+        for (i in 1:N) {
+          J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
+          TM0 <- TM
+          TM <- J %*% TM
+          norsal <- try(pracma::normest(TM %*% v), silent = FALSE)
+          if ("try-error" %in% class(norsal)) {
+            TM <- TM0
+            lvmax[i] <- lvmax[i - 1]
             warning("Lyapunov exponent tends to infinity. Not convergence \n")
             next
           } else {
-            lvmax[i]<-(1/i)*log(norsal)
+            lvmax[i] <- (1 / i) * log(norsal)
           }
         }
 
         # Plots
-        if (doplot==TRUE){
-          par(mfrow=c(1,1))
-          plot(lvmax[c(100:N)],type="l",xlab = "Number of observations", ylab = "Values",main=paste("Largest Lyapunov exponent\n","Full sample | m","=",m,""),col="darkgray")
-          abline(h=0,col="steelblue")
+        if (doplot == TRUE) {
+          par(mfrow = c(1, 1))
+          plot(lvmax[c(100:N)], type = "l", xlab = "Number of observations", ylab = "Values", main = paste("Largest Lyapunov exponent\n", "Full sample | m", "=", m, ""), col = "darkgray")
+          abline(h = 0, col = "steelblue")
         }
 
         # Eta errors
-        etalvmax<-pracma::zeros(N,1)
-        etalvmax[1]<-lvmax[1]-lvmax[N]
-        for (j in 2:N){
-          etalvmax[j]<-j*lvmax[j]-(j-1)*lvmax[j-1]-lvmax[N]
+        etalvmax <- pracma::zeros(N, 1)
+        etalvmax[1] <- lvmax[1] - lvmax[N]
+        for (j in 2:N) {
+          etalvmax[j] <- j * lvmax[j] - (j - 1) * lvmax[j - 1] - lvmax[N]
         }
 
         # Long-run variance of the eta's mean
-        varmax<-(sandwich::lrvar(etalvmax, type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F))^0.5
+        varmax <- (sandwich::lrvar(etalvmax, type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F))^0.5
 
         # Hypothesis contrast
-        Ztestmax<-lvmax[N]/(varmax/sqrt(N))
-        p.value.max<-pnorm(Ztestmax)
+        Ztestmax <- lvmax[N] / (varmax / sqrt(N))
+        p.value.max <- pnorm(Ztestmax)
 
         # Output
-        LE<-list("estimator"=c("Largest Lyapunov exponent"),"procedure"=c("Norma-2 by full sample method"),
-                 "exponent"=matrix(c(lvmax[N],varmax,Ztestmax,p.value.max), nrow=1,ncol=4, byrow=F, dimnames=list("Exponent",c("Estimate","Std. Error","z value","Pr(>|z|)"))),
-                 "sample"=N,"block.length"=N,"no.block"=1
+        LE <- list(
+          "estimator" = c("Largest Lyapunov exponent"), "procedure" = c("Norma-2 by full sample method"),
+          "exponent" = matrix(c(lvmax[N], varmax, Ztestmax, p.value.max), nrow = 1, ncol = 4, byrow = F, dimnames = list("Exponent", c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
+          "sample" = N, "block.length" = N, "no.block" = 1
         )
         return(LE)
       }
-      LE = lyap_max_full(x,doplot=doplot)
+      LE <- lyap_max_full(x, doplot = doplot)
     }
 
     # Class definition
-    LE <- c(data,LE,nprint=0)
+    LE <- c(data, LE, nprint = 0)
     class(LE) <- "lyapunov"
 
     # Output

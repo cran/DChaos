@@ -16,7 +16,8 @@ jacobian.net(
   pre.white = TRUE,
   trace = 1,
   seed.t = TRUE,
-  seed = 56666459
+  seed = 56666459,
+  ...
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ jacobian.net(
 \item{seed.t}{a logical value denoting if the user wants to fix the seed \code{TRUE} or not \code{FALSE} (Default TRUE).}
 
 \item{seed}{a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).}
+
+\item{...}{further arguments passed to or from \code{nnet} function.}
 }
 \value{
 This function returns several objects considering the parameter set selected by the user. Partial derivatives are calculated analytically from the best-fitted neural net model. It also contains some useful information about the best-fitted feed-forward single hidden layer neural net model saved, the best set of weights found, the fitted values, the residuals obtained or the best embedding parameters set chosen. This function allows the R user uses the data previously obtained from the best-fitted neural network estimated by the \code{netfit} function if \code{model} is not empty. Otherwise \code{data} has to be specified.

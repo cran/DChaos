@@ -15,7 +15,8 @@ netfit(
   pre.white = TRUE,
   trace = 1,
   seed.t = TRUE,
-  seed = 56666459
+  seed = 56666459,
+  ...
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ netfit(
 \item{seed.t}{a logical value denoting if the user wants to fix the seed \code{TRUE} or not \code{FALSE} (Default TRUE).}
 
 \item{seed}{a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).}
+
+\item{...}{further arguments passed to or from \code{nnet} function.}
 }
 \value{
 This function returns several objects considering the parameter set selected by the user. The best-fitted feed-forward single hidden layer neural net model is saved. It also contains some useful information about the best set of weights found, the fitted values, the residuals obtained or the best embedding parameters set chosen. The best 10 models are displayed on the console. The first column is the neural net number, the second column is the embedding dimension, the third column is the lag or reconstruction delay considered, the fourth column is the number of neurones (or nodes) in the single hidden layer and the fifth column is the Bayesian Information Criterion (BIC) value corresponding to that neural net. Notice that the neural net models are sorted from lowest to highest BIC values.

@@ -25,86 +25,92 @@
 #' ## set.seed(34)
 #' ## Simulates time-series data from the deterministic rossler system
 #' ## with a chaotic behaviour.
-#' ts <- rossler.sim(a=0.2, b=0.2, c=5.7, s=0, time=seq(0,100,0.1))
+#' ts <- rossler.sim(a = 0.2, b = 0.2, c = 5.7, s = 0, time = seq(0, 100, 0.1))
 #' ##
 #' ## Simulates time-series data from the deterministic rossler system
 #' ## with a non-chaotic behaviour.
-#' ts <- rossler.sim(a=0.1, b=0.1, c=7, s=0, time=seq(0,100,0.1))
+#' ts <- rossler.sim(a = 0.1, b = 0.1, c = 7, s = 0, time = seq(0, 100, 0.1))
 #' @author Julio E. Sandubete, Lorenzo Escot
 #' @importFrom stats rnorm
 #' @importFrom stats as.ts
 #' @importFrom stats complete.cases
 #' @export rossler.sim
-rossler.sim<-function(a=0.2, b=0.2, c=5.7, s=0, x0=rnorm(1), y0=rnorm(1), z0=rnorm(1), time=seq(0,100,0.01), n.start = 50){
+rossler.sim <- function(a = 0.2, b = 0.2, c = 5.7, s = 0, x0 = rnorm(1), y0 = rnorm(1), z0 = rnorm(1), time = seq(0, 100, 0.01), n.start = 50) {
 
   # Checks
-  if (!is.vector(time)){stop("'time' should be a numeric vector denoting the time-lapse and the time-step")}
+  if (!is.vector(time)) {
+    stop("'time' should be a numeric vector denoting the time-lapse and the time-step")
+  }
 
   # Settings
-  n<-length(time)
-  parameter<-c(a,b,c)
-  setting<-c(x0,y0,z0)
+  n <- length(time)
+  parameter <- c(a, b, c)
+  setting <- c(x0, y0, z0)
 
   # Simulates time series from the Rössler system
-  ros.equ<-function(parameter,setting,time){
+  ros.equ <- function(parameter, setting, time) {
 
     # Settings
-    a<-parameter[1]
-    b<-parameter[2]
-    c<-parameter[3]
-    xo<-setting[1]
-    yo<-setting[2]
-    zo<-setting[3]
+    a <- parameter[1]
+    b <- parameter[2]
+    c <- parameter[3]
+    xo <- setting[1]
+    yo <- setting[2]
+    zo <- setting[3]
 
     # Rössler system
-    dx=-yo-zo
-    dy=xo+a*yo
-    dz=b+zo*(xo-c)
+    dx <- -yo - zo
+    dy <- xo + a * yo
+    dz <- b + zo * (xo - c)
 
-    #Output
-    return(c(dx,dy,dz))
+    # Output
+    return(c(dx, dy, dz))
   }
-  ros.sim<-rk(fun=ros.equ,parameter=parameter,setting=setting,time=time)
+  ros.sim <- rk(fun = ros.equ, parameter = parameter, setting = setting, time = time)
 
   # To avoid an unstable system
-  if (nrow(ros.sim) != nrow(ros.sim[complete.cases(ros.sim),])){stop("should simulate it again due to some values of the parameters or initial conditions have leaded to an unstable system that tend to infinity.")}
+  if (nrow(ros.sim) != nrow(ros.sim[complete.cases(ros.sim), ])) {
+    stop("should simulate it again due to some values of the parameters or initial conditions have leaded to an unstable system that tend to infinity.")
+  }
 
   # Output
-  return(ros.sim[-c(1:(.1*n)),])
+  return(ros.sim[-c(1:(.1 * n)), ])
 }
 
 ################################################################################
 # We have implemented the classical Runge–Kutta method (RK4) in order to generate
 # time-series data from continuous-time dynamical system as the Rössler system.
-rk<-function(fun,parameter,setting,time){
+rk <- function(fun, parameter, setting, time) {
 
   # Checks
-  if (!is.function(fun)){stop("'fun' should be a function containing a continuous-time dynamical system")}
-  if (!is.vector(parameter)){stop("'parameter' should be a numeric vector denoting the parameter set")}
-  if (!is.vector(setting)){stop("'setting' should be a numeric vector denoting the setting set")}
-  if (!is.vector(time)){stop("'time' should be a numeric vector denoting the time-lapse and the time-step")}
+  if (!is.function(fun)) {
+    stop("'fun' should be a function containing a continuous-time dynamical system")
+  }
+  if (!is.vector(parameter)) {
+    stop("'parameter' should be a numeric vector denoting the parameter set")
+  }
+  if (!is.vector(setting)) {
+    stop("'setting' should be a numeric vector denoting the setting set")
+  }
+  if (!is.vector(time)) {
+    stop("'time' should be a numeric vector denoting the time-lapse and the time-step")
+  }
 
   # Settings
-  n                 <-  length(time)
-  out               <-  matrix(ncol=length(setting), nrow=n)
-  out[1,]           <-  setting
-  h                 <-  time[2]-time[1]
+  n <- length(time)
+  out <- matrix(ncol = length(setting), nrow = n)
+  out[1, ] <- setting
+  h <- time[2] - time[1]
 
   # Runge-Kutta method (RK4)
-  for (i in 2:n){
-    k1            <-  h*fun(parameter,out[i-1,],time[i-1])
-    k2            <-  h*fun(parameter,out[i-1,]+k1/2,time[i-1]+h/2)
-    k3            <-  h*fun(parameter,out[i-1,]+k2/2,time[[i-1]]+h/2)
-    k4            <-  h*fun(parameter,out[i-1,]+k3,time[[i-1]]+h)
-    out[i,]       <-  out[i-1,]+(1/6)*(k1+2*k2+2*k3+k4)
+  for (i in 2:n) {
+    k1 <- h * fun(parameter, out[i - 1, ], time[i - 1])
+    k2 <- h * fun(parameter, out[i - 1, ] + k1 / 2, time[i - 1] + h / 2)
+    k3 <- h * fun(parameter, out[i - 1, ] + k2 / 2, time[[i - 1]] + h / 2)
+    k4 <- h * fun(parameter, out[i - 1, ] + k3, time[[i - 1]] + h)
+    out[i, ] <- out[i - 1, ] + (1 / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
   }
 
   # Output
-  return(cbind("x"=stats::as.ts(out[,1]),"y"=stats::as.ts(out[,2]),"z"=stats::as.ts(out[,3])))
+  return(cbind("x" = stats::as.ts(out[, 1]), "y" = stats::as.ts(out[, 2]), "z" = stats::as.ts(out[, 3])))
 }
-
-
-
-
-
-

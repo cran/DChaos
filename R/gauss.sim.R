@@ -33,32 +33,31 @@
 #' @importFrom stats as.ts
 #' @importFrom stats ts
 #' @export gauss.sim
-gauss.sim     <- function(alpha=6.2 , beta=-0.5 , s=0, x0=runif(1,0,1), n=1000, n.start=50){
+gauss.sim <- function(alpha = 6.2, beta = -0.5, s = 0, x0 = runif(1, 0, 1), n = 1000, n.start = 50) {
 
   # Settings
-  innov         <- rnorm(n)
-  start.innov   <- rnorm(n.start)
-  e             <- c(start.innov[1L:n.start], innov[1L:n])
-  ntot          <- length(e)
-  x             <- double(ntot)
-  x[1]          <- x0
+  innov <- rnorm(n)
+  start.innov <- rnorm(n.start)
+  e <- c(start.innov[1L:n.start], innov[1L:n])
+  ntot <- length(e)
+  x <- double(ntot)
+  x[1] <- x0
 
   # Simulates time-series data from the Gauss map
-  if(s != 0) {
-    for(i in 2:ntot) {
-      x[i] <- exp(-alpha*x[i-1]^2)+beta
+  if (s != 0) {
+    for (i in 2:ntot) {
+      x[i] <- exp(-alpha * x[i - 1]^2) + beta
     }
-    x <- x + s*e
+    x <- x + s * e
   } else {
-    for(i in 2:ntot) {
-      x[i] <- exp(-alpha*x[i-1]^2)+beta
+    for (i in 2:ntot) {
+      x[i] <- exp(-alpha * x[i - 1]^2) + beta
     }
   }
-  if (n.start > 0){
+  if (n.start > 0) {
     x <- x[-(1L:n.start)]
   }
 
   # Output
   return(ts(x))
 }
-

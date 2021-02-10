@@ -23,49 +23,47 @@
 #' ## set.seed(34)
 #' ## Simulates time-series data from the deterministic henon map
 #' ## with a chaotic behaviour.
-#' ts <- henon.sim(a=1.4, b=0.3, s=0, n=1000)
+#' ts <- henon.sim(a = 1.4, b = 0.3, s = 0, n = 1000)
 #' ##
 #' ## Simulates time-series data from the deterministic henon map
 #' ## with a non-chaotic behaviour.
-#' ts <- henon.sim(a=1.2, b=0.1, s=0, n=1000)
+#' ts <- henon.sim(a = 1.2, b = 0.1, s = 0, n = 1000)
 #' @author Julio E. Sandubete, Lorenzo Escot
 #' @importFrom stats runif
 #' @importFrom stats rnorm
 #' @importFrom stats as.ts
 #' @export henon.sim
-henon.sim     <- function(a=1.4, b=0.3, s=0, x0=runif(1,-0.5,0.5), y0=runif(1,-0.5,0.5), n=1000, n.start = 50){
+henon.sim <- function(a = 1.4, b = 0.3, s = 0, x0 = runif(1, -0.5, 0.5), y0 = runif(1, -0.5, 0.5), n = 1000, n.start = 50) {
 
   # Settings
-  innov         <- rnorm(n)
-  start.innov   <- rnorm(n.start)
-  e             <- c(start.innov[1L:n.start], innov[1L:n])
-  ntot          <- length(e)
-  x             <- double(ntot)
-  y             <- double(ntot)
-  x[1]          <- x0
-  y[1]          <- y0
+  innov <- rnorm(n)
+  start.innov <- rnorm(n.start)
+  e <- c(start.innov[1L:n.start], innov[1L:n])
+  ntot <- length(e)
+  x <- double(ntot)
+  y <- double(ntot)
+  x[1] <- x0
+  y[1] <- y0
 
   # Simulates time-series data from the henon map
-  if(s != 0) {
-    for(i in 2:ntot) {
-      x[i] <- 1-a*x[i-1]^2+b*y[i-1]
-      y[i] <- x[i-1]
+  if (s != 0) {
+    for (i in 2:ntot) {
+      x[i] <- 1 - a * x[i - 1]^2 + b * y[i - 1]
+      y[i] <- x[i - 1]
     }
-    x <- x + s*e
-    y <- y + s*e
+    x <- x + s * e
+    y <- y + s * e
   } else {
-    for(i in 2:ntot) {
-      x[i] <- 1-a*x[i-1]^2+b*y[i-1]
-      y[i] <- x[i-1]
+    for (i in 2:ntot) {
+      x[i] <- 1 - a * x[i - 1]^2 + b * y[i - 1]
+      y[i] <- x[i - 1]
     }
   }
-  if (n.start > 0){
+  if (n.start > 0) {
     x <- x[-(1L:n.start)]
     y <- y[-(1L:n.start)]
   }
 
   # Output
-  return(ts(cbind(x,y)))
+  return(ts(cbind(x, y)))
 }
-
-
