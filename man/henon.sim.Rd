@@ -42,11 +42,11 @@ This function provides also noisy time-series data from the deterministic henon 
 ## set.seed(34)
 ## Simulates time-series data from the deterministic henon map
 ## with a chaotic behaviour.
-ts <- henon.sim(a = 1.4, b = 0.3, s = 0, n = 1000)
+ts <- henon.sim(a=1.4, b=0.3, s=0, n=1000)
 ##
 ## Simulates time-series data from the deterministic henon map
 ## with a non-chaotic behaviour.
-ts <- henon.sim(a = 1.2, b = 0.1, s = 0, n = 1000)
+ts <- henon.sim(a=1.2, b=0.1, s=0, n=1000)
 }
 \references{
 Hénon, M. 1976 A two-dimensional mapping with a strange attractor. Communications in Mathematical Physics 50(1):69-77.

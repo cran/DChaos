@@ -44,479 +44,469 @@
 #' @importFrom graphics plot
 #' @importFrom stats median
 #' @export lyapunov.spec
-lyapunov.spec <- function(data, blocking = c("BOOT", "NOVER", "EQS", "FULL"), B = 1000, doplot = TRUE) {
+lyapunov.spec    <- function(data, blocking=c("BOOT","NOVER","EQS","FULL"), B=1000, doplot=TRUE){
 
   # Checks
-  if (is.null(data$jacobian)) {
-    stop("'data' should be a jacobian object")
-  }
-  if (is.matrix(data$jacobian) | is.data.frame(data$jacobian)) {
-    if (is.null(blocking)) {
-      stop("'blocking' should be 'BOOT', 'NOVER', 'EQS' or 'FULL'")
-    }
-    if (B < 1) {
-      stop("wrong value of bootstrap iterations")
-    }
+  if (is.null(data$jacobian)){stop("'data' should be a jacobian object")}
+  if (is.matrix(data$jacobian) | is.data.frame(data$jacobian)){
+    if (is.null(blocking)){stop("'blocking' should be 'BOOT', 'NOVER', 'EQS' or 'FULL'")}
+    if (B<1){stop("wrong value of bootstrap iterations")}
 
     # Settings
     x <- data$jacobian
     N <- nrow(x)
     m <- ncol(x)
-    blocking <- match.arg(blocking)
-    bar <- utils::txtProgressBar(min = 0, max = B, style = 3)
+    blocking = match.arg(blocking)
 
     # Estimates the Lyapunov exponent: Bootstrap sample
-    if (blocking == "BOOT") {
-      lyap_spec_boot <- function(x, B = 1000, doplot = TRUE) {
+    if (blocking == "BOOT"){
+      lyap_spec_boot<-function(x,B=1000,doplot=TRUE){
 
         # Lyapunov exponents
-        M <- trunc(36.2 * (N / log(N))^(1 / 6))
-        B <- B
-        lpv <- array(0, dim = c(B, m))
-        lv <- array(0, dim = c(M, B, m))
-        for (b in 1:B) {
-          J <- matrix(0, m, m)
-          TM <- diag(1, m)
-          j <- 0
-          mbootsample <- sort(sample(N, M, replace = FALSE))
-          for (i in mbootsample) {
-            j <- j + 1
-            J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
-            TM <- J %*% TM
-            qro <- qr(TM)
-            Q <- qr.Q(qro)
-            R <- qr.R(qro)
-            if (m == 1) {
-              if (length(which(diag(sign(R)) == 0)) != 0) {
-                TM <- Q
+        M<-trunc(36.2*(N/log(N))^(1/6))
+        B<-B
+        lpv<-array(0,dim=c(B,m))
+        lv<-array(0,dim=c(M,B,m))
+        for (b in 1:B){
+          J<-matrix(0,m,m)
+          TM<-diag(1,m)
+          j<-0
+          mbootsample <- sort(sample(N, M,replace=FALSE))
+          for (i in mbootsample){
+            j<-j+1
+            J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
+            TM<-J%*%TM
+            qro<-qr(TM)
+            Q<-qr.Q(qro)
+            R<-qr.R(qro)
+            if (m==1){
+              if (length(which(diag(sign(R))==0))!=0){
+                TM<-Q
                 next
               }
-              Q <- Q %*% solve(diag(sign(R)))
-              R <- R %*% diag(sign(R))
+              Q<-Q%*%solve(diag(sign(R)))
+              R<-R%*%diag(sign(R))
             } else {
-              if (length(which(diag(sign(R)) == 0)) != 0) {
-                TM <- Q
+              if (length(which(diag(sign(R))==0))!=0){
+                TM<-Q
                 next
               }
-              Q <- Q %*% solve(diag(diag(sign(R))))
-              R <- R %*% diag(diag(sign(R)))
+              Q<-Q%*%solve(diag(diag(sign(R))))
+              R<-R%*%diag(diag(sign(R)))
             }
-            for (r in 1:m) {
-              lpv[b, r] <- lpv[b, r] + log(R[r, r])
-              lv[j, b, r] <- lpv[b, r] / (j)
+            for (r in 1:m){
+              lpv[b,r]<-lpv[b,r]+log(R[r,r])
+              lv[j,b,r]<-lpv[b,r]/(j)
             }
-            TM <- Q
+            TM<-Q
           }
-          utils::setTxtProgressBar(bar, b)
         }
-        lpv <- lpv / M
+        lpv<-lpv/M
 
         # Plots
-        if (doplot == TRUE) {
-          lv.mean <- c()
-          if (m < 5) {
-            par(mfrow = c(ceiling(m / 2), 2))
+        if (doplot==TRUE){
+          lv.mean<-c()
+          if (m < 5){
+            par(mfrow=c(ceiling(m/2),2))
           } else {
-            par(mfrow = c(ceiling(m / 3), 3))
+            par(mfrow=c(ceiling(m/3),3))
           }
-          for (r in 1:m) {
-            plot(lv[, 1, r], ylim = c(min(lv[, , r]), max(lv[, , r])), type = "l", xlab = "Block length", ylab = "Values", main = paste("Lyapunov exponent", r, "\n", "Bootstrap sample | m", "=", m, ""), col = "darkgray")
-            abline(h = 0, col = "steelblue")
-            for (b in 2:B) {
-              lines(lv[, b, r], type = "l", col = "darkgray")
+          for (r in 1:m){
+            plot(lv[,1,r], ylim=c(min(lv[,,r]),max(lv[,,r])), type="l",xlab="Block length", ylab="Values", main=paste("Lyapunov exponent",r,"\n","Bootstrap sample | m","=",m,""),col="darkgray")
+            abline(h=0,col="steelblue")
+            for (b in 2:B){
+              lines(lv[,b,r], type="l",col="darkgray")
             }
-            for (a in 1:M) {
-              lv.mean[a] <- mean(lv[a, c(1:B), r])
+            for (a in 1:M){
+              lv.mean[a]<-mean(lv[a,c(1:B),r])
             }
-            lines(lv.mean, type = "l", col = "indianred1")
+            lines(lv.mean,type="l",col="indianred1")
           }
-          par(mfrow = c(1, 1))
+          par(mfrow=c(1,1))
         }
 
         # Eta errors
-        etalv <- array(0, dim = c(M, B, m))
-        for (b in 1:B) {
-          for (r in 1:m) {
-            etalv[1, b, r] <- lv[1, b, r] - lv[M, b, r]
+        etalv<-array(0,dim=c(M,B,m))
+        for (b in 1:B){
+          for (r in 1:m){
+            etalv[1,b,r]<-lv[1,b,r]-lv[M,b,r]
           }
-          for (j in 2:M) {
-            for (r in 1:m) {
-              etalv[j, b, r] <- j * lv[j, b, r] - (j - 1) * lv[j - 1, b, r] - lv[M, b, r]
+          for (j in 2:M){
+            for (r in 1:m){
+              etalv[j,b,r]<-j*lv[j,b,r]-(j-1)*lv[j-1,b,r]-lv[M,b,r]
             }
           }
         }
 
         # Long-run variance of the eta's mean
-        varlv2 <- array(0, dim = c(B, m))
-        for (b in 1:B) {
-          if (m == 1) {
-            varlv2[b, ] <- (sandwich::lrvar(etalv[, b, ], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F))^0.5
+        varlv2<-array(0,dim=c(B,m))
+        for (b in 1:B){
+          if(m==1){
+            varlv2[b,]<-(sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F))^0.5
           } else {
-            varlv2[b, ] <- diag((sandwich::lrvar(etalv[, b, ], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F)))^0.5
+            varlv2[b,]<-diag((sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F)))^0.5
           }
         }
 
         # Hypothesis contrast
         # Mean value
-        lpv_mean <- apply(lpv, 2, mean)
-        sdlpv_mean <- apply(varlv2, 2, mean)
-        Ztest_mean <- pracma::zeros(1, m)
-        p.value_mean <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest_mean[r] <- lpv_mean[r] / (sdlpv_mean[r] / sqrt(M))
-          p.value_mean[r] <- pnorm(Ztest_mean[r])
+        lpv_mean<-apply(lpv,2,mean)
+        sdlpv_mean<-apply(varlv2,2,mean)
+        Ztest_mean<-pracma::zeros(1,m)
+        p.value_mean<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest_mean[r]<-lpv_mean[r]/(sdlpv_mean[r]/sqrt(M))
+          p.value_mean[r]<-pnorm(Ztest_mean[r])
         }
 
         # Median value
-        lpv_median <- apply(lpv, 2, median)
-        sdlpv_median <- apply(varlv2, 2, median)
-        Ztest_median <- pracma::zeros(1, m)
-        p.value_median <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest_median[r] <- lpv_median[r] / (sdlpv_median[r] / sqrt(M))
-          p.value_median[r] <- pnorm(Ztest_median[r])
+        lpv_median<-apply(lpv,2,median)
+        sdlpv_median<-apply(varlv2,2,median)
+        Ztest_median<-pracma::zeros(1,m)
+        p.value_median<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest_median[r]<-lpv_median[r]/(sdlpv_median[r]/sqrt(M))
+          p.value_median[r]<-pnorm(Ztest_median[r])
         }
 
         # Output
-        LE <- list(
-          "estimator" = c("Lyapunov exponent spectrum"), "procedure" = c("QR decomposition by bootstrap blocking method"),
-          "exponent.mean" = matrix(c(lpv_mean, sdlpv_mean, Ztest_mean, p.value_mean), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "exponent.median" = matrix(c(lpv_median, sdlpv_median, Ztest_median, p.value_median), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "sample" = N, "block.length" = M, "no.block" = B
+        LE<-list("estimator"=c("Lyapunov exponent spectrum"),"procedure"=c("QR decomposition by bootstrap blocking method"),
+                 "exponent.mean"=matrix(c(lpv_mean,sdlpv_mean,Ztest_mean,p.value_mean), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "exponent.median"=matrix(c(lpv_median,sdlpv_median,Ztest_median,p.value_median), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "sample"=N,"block.length"=M,"no.block"=B
         )
         return(LE)
       }
-      LE <- lyap_spec_boot(x, B = B, doplot = doplot)
+      LE = lyap_spec_boot(x,B=B,doplot=doplot)
     }
 
     # Estimates the Lyapunov exponent: Non-overlapping sample
-    if (blocking == "NOVER") {
-      lyap_spec_over <- function(x, doplot = TRUE) {
-        N <- nrow(x)
-        m <- ncol(x)
+    if (blocking == "NOVER"){
+      lyap_spec_over<-function(x,doplot=TRUE){
+
+        N<-nrow(x)
+        m<-ncol(x)
 
         # Lyapunov exponents
-        M <- trunc(36.2 * (N / log(N))^(1 / 6))
-        B <- floor(N / M)
-        lpv <- array(0, dim = c(B, m))
-        lv <- array(0, dim = c(M, B, m))
-        for (b in 1:B) {
-          J <- matrix(0, m, m)
-          TM <- diag(1, m)
-          for (i in (1 + (b - 1) * M):(b * M)) {
-            J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
-            TM <- J %*% TM
-            qro <- qr(TM)
-            Q <- qr.Q(qro)
-            R <- qr.R(qro)
-            if (m == 1) {
-              if (length(which(diag(sign(R)) == 0)) != 0) {
-                TM <- Q
+        M<-trunc(36.2*(N/log(N))^(1/6))
+        B<-floor(N/M)
+        lpv<-array(0,dim=c(B,m))
+        lv<-array(0,dim=c(M,B,m))
+        for (b in 1:B){
+          J<-matrix(0,m,m)
+          TM<-diag(1,m)
+          for (i in (1+(b-1)*M):(b*M)){
+            J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
+            TM<-J%*%TM
+            qro<-qr(TM)
+            Q<-qr.Q(qro)
+            R<-qr.R(qro)
+            if (m==1){
+              if (length(which(diag(sign(R))==0))!=0){
+                TM<-Q
                 next
               }
-              Q <- Q %*% solve(diag(sign(R)))
-              R <- R %*% diag(sign(R))
+              Q<-Q%*%solve(diag(sign(R)))
+              R<-R%*%diag(sign(R))
             } else {
-              if (length(which(diag(sign(R)) == 0)) != 0) {
-                TM <- Q
+              if (length(which(diag(sign(R))==0))!=0){
+                TM<-Q
                 next
               }
-              Q <- Q %*% solve(diag(diag(sign(R))))
-              R <- R %*% diag(diag(sign(R)))
+              Q<-Q%*%solve(diag(diag(sign(R))))
+              R<-R%*%diag(diag(sign(R)))
             }
-            for (j in 1:m) {
-              lpv[b, j] <- lpv[b, j] + log(R[j, j])
-              lv[i - (b - 1) * M, b, j] <- lpv[b, j] / (i - (b - 1) * M)
+            for (j in 1:m){
+              lpv[b,j]<-lpv[b,j]+log(R[j,j])
+              lv[i-(b-1)*M,b,j]<-lpv[b,j]/(i-(b-1)*M)
             }
-            TM <- Q
+            TM<-Q
           }
         }
-        lpv <- lpv / M
+        lpv<-lpv/M
 
         # Plots
-        if (doplot == TRUE) {
-          if (m < 5) {
-            par(mfrow = c(ceiling(m / 2), 2))
+        if (doplot==TRUE){
+          if (m < 5){
+            par(mfrow=c(ceiling(m/2),2))
           } else {
-            par(mfrow = c(ceiling(m / 3), 3))
+            par(mfrow=c(ceiling(m/3),3))
           }
-          for (r in 1:m) {
-            plot(lv[, 1, r], ylim = c(min(lv[, , r]), max(lv[, , r])), type = "l", xlab = "Block length", ylab = "Values", main = paste("Lyapunov exponent", r, "\n", "Non-overlapping sample | m", "=", m, ""), col = "darkgray")
-            abline(h = 0, col = "steelblue")
-            for (b in 2:B) {
-              lines(lv[, b, r], type = "l", col = "darkgray")
+          for (r in 1:m){
+            plot(lv[,1,r],ylim=c(min(lv[,,r]),max(lv[,,r])), type="l",xlab="Block length",ylab="Values", main=paste("Lyapunov exponent",r,"\n","Non-overlapping sample | m","=",m,""),col="darkgray")
+            abline(h=0,col="steelblue")
+            for (b in 2:B){
+              lines(lv[,b,r], type="l",col="darkgray")
             }
           }
-          par(mfrow = c(1, 1))
+          par(mfrow=c(1,1))
         }
 
         # Eta errors
-        etalv <- array(0, dim = c(M, B, m))
-        for (b in 1:B) {
-          for (r in 1:m) {
-            etalv[1, b, r] <- lv[1, b, r] - lv[M, b, r]
+        etalv<-array(0,dim=c(M,B,m))
+        for (b in 1:B){
+          for (r in 1:m){
+            etalv[1,b,r]<-lv[1,b,r]-lv[M,b,r]
           }
-          for (j in 2:M) {
-            for (r in 1:m) {
-              etalv[j, b, r] <- j * lv[j, b, r] - (j - 1) * lv[j - 1, b, r] - lv[M, b, r]
+          for (j in 2:M){
+            for (r in 1:m){
+              etalv[j,b,r]<-j*lv[j,b,r]-(j-1)*lv[j-1,b,r]-lv[M,b,r]
             }
           }
         }
 
         # Long-run variance of the eta's mean
-        varlv2 <- array(0, dim = c(B, m))
-        for (b in 1:B) {
-          if (m == 1) {
-            varlv2[b, ] <- (sandwich::lrvar(etalv[, b, ], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F))^0.5
+        varlv2<-array(0,dim=c(B,m))
+        for (b in 1:B){
+          if(m==1){
+            varlv2[b,]<-(sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F))^0.5
           } else {
-            varlv2[b, ] <- diag((sandwich::lrvar(etalv[, b, ], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F)))^0.5
+            varlv2[b,]<-diag((sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F)))^0.5
           }
         }
 
         # Hypothesis contrast
         # Mean value
-        lpv_mean <- apply(lpv, 2, mean)
-        sdlpv_mean <- apply(varlv2, 2, mean)
-        Ztest_mean <- pracma::zeros(1, m)
-        p.value_mean <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest_mean[r] <- lpv_mean[r] / (sdlpv_mean[r] / sqrt(M))
-          p.value_mean[r] <- pnorm(Ztest_mean[r])
+        lpv_mean<-apply(lpv,2,mean)
+        sdlpv_mean<-apply(varlv2,2,mean)
+        Ztest_mean<-pracma::zeros(1,m)
+        p.value_mean<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest_mean[r]<-lpv_mean[r]/(sdlpv_mean[r]/sqrt(M))
+          p.value_mean[r]<-pnorm(Ztest_mean[r])
         }
 
         # Median value
-        lpv_median <- apply(lpv, 2, median)
-        sdlpv_median <- apply(varlv2, 2, median)
-        Ztest_median <- pracma::zeros(1, m)
-        p.value_median <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest_median[r] <- lpv_median[r] / (sdlpv_median[r] / sqrt(M))
-          p.value_median[r] <- pnorm(Ztest_median[r])
+        lpv_median<-apply(lpv,2,median)
+        sdlpv_median<-apply(varlv2,2,median)
+        Ztest_median<-pracma::zeros(1,m)
+        p.value_median<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest_median[r]<-lpv_median[r]/(sdlpv_median[r]/sqrt(M))
+          p.value_median[r]<-pnorm(Ztest_median[r])
         }
 
         # Output
-        LE <- list(
-          "estimator" = c("Lyapunov exponent spectrum"), "procedure" = c("QR decomposition by non-overlapping blocking method"),
-          "exponent.mean" = matrix(c(lpv_mean, sdlpv_mean, Ztest_mean, p.value_mean), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "exponent.median" = matrix(c(lpv_median, sdlpv_median, Ztest_median, p.value_median), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "sample" = N, "block.length" = M, "no.block" = B
+        LE<-list("estimator"=c("Lyapunov exponent spectrum"),"procedure"=c("QR decomposition by non-overlapping blocking method"),
+                 "exponent.mean"=matrix(c(lpv_mean,sdlpv_mean,Ztest_mean,p.value_mean), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "exponent.median"=matrix(c(lpv_median,sdlpv_median,Ztest_median,p.value_median), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "sample"=N,"block.length"=M,"no.block"=B
         )
         return(LE)
       }
-      LE <- lyap_spec_over(x, doplot = doplot)
+      LE = lyap_spec_over(x,doplot=doplot)
     }
 
     # Estimates the Lyapunov exponent: Equally spaced sample
-    if (blocking == "EQS") {
-      lyap_spec_ess <- function(x, doplot = TRUE) {
-        N <- nrow(x)
-        m <- ncol(x)
+    if (blocking == "EQS"){
+      lyap_spec_ess<-function(x,doplot=TRUE){
+
+        N<-nrow(x)
+        m<-ncol(x)
 
         # Lyapunov exponents
-        M <- trunc(36.2 * (N / log(N))^(1 / 6))
-        B <- floor(N / M)
-        lpv <- array(0, dim = c(B, m))
-        lv <- array(0, dim = c(M, B, m))
-        for (b in 1:B) {
-          J <- matrix(0, m, m)
-          TM <- diag(1, m)
-          j <- 0
-          for (i in seq(from = b, to = (B * M), by = B)) {
-            j <- j + 1
-            J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
-            TM <- J %*% TM
-            qro <- qr(TM)
-            Q <- qr.Q(qro)
-            R <- qr.R(qro)
-            if (m == 1) {
-              if (length(which(diag(sign(R)) == 0)) != 0) {
-                TM <- Q
+        M<-trunc(36.2*(N/log(N))^(1/6))
+        B<-floor(N/M)
+        lpv<-array(0,dim=c(B,m))
+        lv<-array(0,dim=c(M,B,m))
+        for (b in 1:B){
+          J<-matrix(0,m,m)
+          TM<-diag(1,m)
+          j<-0
+          for (i in seq(from=b,to=(B*M), by=B)){
+            j<-j+1
+            J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
+            TM<-J%*%TM
+            qro<-qr(TM)
+            Q<-qr.Q(qro)
+            R<-qr.R(qro)
+            if (m==1){
+              if (length(which(diag(sign(R))==0))!=0){
+                TM<-Q
                 next
               }
-              Q <- Q %*% solve(diag(sign(R)))
-              R <- R %*% diag(sign(R))
+              Q<-Q%*%solve(diag(sign(R)))
+              R<-R%*%diag(sign(R))
             } else {
-              if (length(which(diag(sign(R)) == 0)) != 0) {
-                TM <- Q
+              if (length(which(diag(sign(R))==0))!=0){
+                TM<-Q
                 next
               }
-              Q <- Q %*% solve(diag(diag(sign(R))))
-              R <- R %*% diag(diag(sign(R)))
+              Q<-Q%*%solve(diag(diag(sign(R))))
+              R<-R%*%diag(diag(sign(R)))
             }
-            for (r in 1:m) {
-              lpv[b, r] <- lpv[b, r] + log(R[r, r])
-              lv[j, b, r] <- lpv[b, r] / (j)
+            for (r in 1:m){
+              lpv[b,r]<-lpv[b,r]+log(R[r,r])
+              lv[j,b,r]<-lpv[b,r]/(j)
             }
-            TM <- Q
+            TM<-Q
           }
         }
-        lpv <- lpv / M
+        lpv<-lpv/M
 
         # Plots
-        if (doplot == TRUE) {
-          if (m < 5) {
-            par(mfrow = c(ceiling(m / 2), 2))
+        if (doplot==TRUE){
+          if (m < 5){
+            par(mfrow=c(ceiling(m/2),2))
           } else {
-            par(mfrow = c(ceiling(m / 3), 3))
+            par(mfrow=c(ceiling(m/3),3))
           }
-          for (r in 1:m) {
-            plot(lv[, 1, r], ylim = c(min(lv[, , r]), max(lv[, , r])), type = "l", xlab = "Block length", ylab = "Values", main = paste("Lyapunov exponent", r, "\n", "Equally spaced sample | m", "=", m, ""), col = "darkgray")
-            abline(h = 0, col = "steelblue")
-            for (b in 2:B) {
-              lines(lv[, b, r], type = "l", col = "darkgray")
+          for (r in 1:m){
+            plot(lv[,1,r], ylim=c(min(lv[,,r]),max(lv[,,r])), type="l",xlab="Block length", ylab="Values", main=paste("Lyapunov exponent",r,"\n","Equally spaced sample | m","=",m,""),col="darkgray")
+            abline(h=0,col="steelblue")
+            for (b in 2:B){
+              lines(lv[,b,r], type="l",col="darkgray")
             }
           }
-          par(mfrow = c(1, 1))
+          par(mfrow=c(1,1))
         }
 
         # Eta errors
-        etalv <- array(0, dim = c(M, B, m))
-        for (b in 1:B) {
-          for (r in 1:m) {
-            etalv[1, b, r] <- lv[1, b, r] - lv[M, b, r]
+        etalv<-array(0,dim=c(M,B,m))
+        for (b in 1:B){
+          for (r in 1:m){
+            etalv[1,b,r]<-lv[1,b,r]-lv[M,b,r]
           }
-          for (j in 2:M) {
-            for (r in 1:m) {
-              etalv[j, b, r] <- j * lv[j, b, r] - (j - 1) * lv[j - 1, b, r] - lv[M, b, r]
+          for (j in 2:M){
+            for (r in 1:m){
+              etalv[j,b,r]<-j*lv[j,b,r]-(j-1)*lv[j-1,b,r]-lv[M,b,r]
             }
           }
         }
 
         # Long-run variance of the eta's mean
-        varlv2 <- array(0, dim = c(B, m))
-        for (b in 1:B) {
-          if (m == 1) {
-            varlv2[b, ] <- (sandwich::lrvar(etalv[, b, ], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F))^0.5
+        varlv2<-array(0,dim=c(B,m))
+        for (b in 1:B){
+          if(m==1){
+            varlv2[b,]<-(sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F))^0.5
           } else {
-            varlv2[b, ] <- diag((sandwich::lrvar(etalv[, b, ], type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F)))^0.5
+            varlv2[b,]<-diag((sandwich::lrvar(etalv[,b,], type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F)))^0.5
           }
         }
 
         # Hypothesis contrast
         # Mean value
-        lpv_mean <- apply(lpv, 2, mean)
-        sdlpv_mean <- apply(varlv2, 2, mean)
-        Ztest_mean <- pracma::zeros(1, m)
-        p.value_mean <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest_mean[r] <- lpv_mean[r] / (sdlpv_mean[r] / sqrt(M))
-          p.value_mean[r] <- pnorm(Ztest_mean[r])
+        lpv_mean<-apply(lpv,2,mean)
+        sdlpv_mean<-apply(varlv2,2,mean)
+        Ztest_mean<-pracma::zeros(1,m)
+        p.value_mean<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest_mean[r]<-lpv_mean[r]/(sdlpv_mean[r]/sqrt(M))
+          p.value_mean[r]<-pnorm(Ztest_mean[r])
         }
 
         # Median value
-        lpv_median <- apply(lpv, 2, median)
-        sdlpv_median <- apply(varlv2, 2, median)
-        Ztest_median <- pracma::zeros(1, m)
-        p.value_median <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest_median[r] <- lpv_median[r] / (sdlpv_median[r] / sqrt(M))
-          p.value_median[r] <- pnorm(Ztest_median[r])
+        lpv_median<-apply(lpv,2,median)
+        sdlpv_median<-apply(varlv2,2,median)
+        Ztest_median<-pracma::zeros(1,m)
+        p.value_median<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest_median[r]<-lpv_median[r]/(sdlpv_median[r]/sqrt(M))
+          p.value_median[r]<-pnorm(Ztest_median[r])
         }
 
         # Output
-        LE <- list(
-          "estimator" = c("Lyapunov exponent spectrum"), "procedure" = c("QR decomposition by equally spaced blocking method"),
-          "exponent.mean" = matrix(c(lpv_mean, sdlpv_mean, Ztest_mean, p.value_mean), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "exponent.median" = matrix(c(lpv_median, sdlpv_median, Ztest_median, p.value_median), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "sample" = N, "block.length" = M, "no.block" = B
+        LE<-list("estimator"=c("Lyapunov exponent spectrum"),"procedure"=c("QR decomposition by equally spaced blocking method"),
+                 "exponent.mean"=matrix(c(lpv_mean,sdlpv_mean,Ztest_mean,p.value_mean), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "exponent.median"=matrix(c(lpv_median,sdlpv_median,Ztest_median,p.value_median), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "sample"=N,"block.length"=M,"no.block"=B
         )
         return(LE)
       }
-      LE <- lyap_spec_ess(x, doplot = doplot)
+      LE = lyap_spec_ess(x,doplot=doplot)
     }
 
     # Estimates the Lyapunov exponent: Full sample
-    if (blocking == "FULL") {
-      lyap_spec_full <- function(x, doplot = TRUE) {
+    if (blocking == "FULL"){
+      lyap_spec_full<-function(x,doplot=TRUE){
 
         # Lyapunov exponents
-        lv <- matrix(0, N, m)
-        lpv <- matrix(0, m, 1)
-        J <- matrix(0, m, m)
-        TM <- diag(1, m)
-        for (i in 1:N) {
-          J <- rbind(as.numeric(x[i, 1:m]), diag(1, m - 1, m))
-          TM <- J %*% TM
-          qro <- qr(TM)
-          Q <- qr.Q(qro)
-          R <- qr.R(qro)
-          if (m == 1) {
-            if (length(which(diag(sign(R)) == 0)) != 0) {
-              TM <- Q
+        lv<-matrix(0,N,m)
+        lpv<-matrix(0,m,1)
+        J<-matrix(0,m,m)
+        TM<-diag(1,m)
+        for (i in 1:N){
+          J<-rbind(as.numeric(x[i,1:m]),diag(1,m-1,m))
+          TM<-J%*%TM
+          qro<-qr(TM)
+          Q<-qr.Q(qro)
+          R<-qr.R(qro)
+          if (m==1){
+            if (length(which(diag(sign(R))==0))!=0){
+              TM<-Q
               next
             }
-            Q <- Q %*% solve(diag(sign(R)))
-            R <- R %*% diag(sign(R))
+            Q<-Q%*%solve(diag(sign(R)))
+            R<-R%*%diag(sign(R))
           } else {
-            if (length(which(diag(sign(R)) == 0)) != 0) {
-              TM <- Q
+            if (length(which(diag(sign(R))==0))!=0){
+              TM<-Q
               next
             }
-            Q <- Q %*% solve(diag(diag(sign(R))))
-            R <- R %*% diag(diag(sign(R)))
+            Q<-Q%*%solve(diag(diag(sign(R))))
+            R<-R%*%diag(diag(sign(R)))
           }
-          for (j in 1:m) {
-            lpv[j] <- lpv[j] + log(R[j, j])
-            lv[i, j] <- lpv[j] / i
+          for (j in 1:m){
+            lpv[j]<-lpv[j]+log(R[j,j])
+            lv[i,j]<-lpv[j]/i
           }
-          TM <- Q
+          TM<-Q
         }
-        lpv <- lpv / N
+        lpv<-lpv/N
 
         # Plots
-        if (doplot == TRUE) {
-          if (m < 5) {
-            par(mfrow = c(ceiling(m / 2), 2))
+        if (doplot==TRUE){
+          if (m < 5){
+            par(mfrow=c(ceiling(m/2),2))
           } else {
-            par(mfrow = c(ceiling(m / 3), 3))
+            par(mfrow=c(ceiling(m/3),3))
           }
-          for (r in 1:m) {
-            plot(lv[, r], type = "l", xlab = "Number of observations", ylab = "Values", main = paste("Lyapunov exponent", r, "\n", "Full sample | m", "=", m, ""), col = "darkgray")
-            abline(h = 0, col = "steelblue")
+          for (r in 1:m){
+            plot(lv[,r], type="l",xlab="Number of observations",ylab="Values",main=paste("Lyapunov exponent",r,"\n","Full sample | m","=",m,""),col="darkgray")
+            abline(h=0,col="steelblue")
           }
-          par(mfrow = c(1, 1))
+          par(mfrow=c(1,1))
         }
 
         # Eta errors
-        etalv <- pracma::zeros(N, m)
-        for (r in 1:m) {
-          etalv[1, r] <- lv[1, r] - lv[N, r]
+        etalv<-pracma::zeros(N,m)
+        for (r in 1:m){
+          etalv[1,r]<-lv[1,r]-lv[N,r]
         }
-        for (j in 2:N) {
-          for (r in 1:m) {
-            etalv[j, r] <- j * lv[j, r] - (j - 1) * lv[j - 1, r] - lv[N, r]
+        for (j in 2:N){
+          for (r in 1:m){
+            etalv[j,r]<-j*lv[j,r]-(j-1)*lv[j-1,r]-lv[N,r]
           }
         }
 
         # Long-run variance of the eta's mean
-        varlv2 <- pracma::zeros(1, m)
-        if (m == 1) {
-          varlv2 <- (sandwich::lrvar(etalv, type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F))^0.5
+        varlv2<-pracma::zeros(1,m)
+        if(m==1){
+          varlv2<-(sandwich::lrvar(etalv, type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F))^0.5
         } else {
-          varlv2 <- diag((sandwich::lrvar(etalv, type = c("Andrews"), prewhite = FALSE, adjust = FALSE, kernel = c("Quadratic Spectral"), aprox = c("ARMA(1,1)"), verbose = F)))^0.5
+          varlv2<-diag((sandwich::lrvar(etalv, type = c("Andrews"), prewhite = FALSE, adjust = FALSE,kernel = c("Quadratic Spectral"), aprox=c("ARMA(1,1)"),verbose=F)))^0.5
         }
 
         # Hypothesis contrast
-        Ztest <- pracma::zeros(1, m)
-        p.value <- pracma::zeros(1, m)
-        for (r in 1:m) {
-          Ztest[r] <- lpv[r] / (varlv2[r] / sqrt(N))
-          p.value[r] <- pnorm(Ztest[r])
+        Ztest<-pracma::zeros(1,m)
+        p.value<-pracma::zeros(1,m)
+        for (r in 1:m){
+          Ztest[r]<-lpv[r]/(varlv2[r]/sqrt(N))
+          p.value[r]<-pnorm(Ztest[r])
         }
 
         # Output
-        LE <- list(
-          "estimator" = c("Lyapunov exponent spectrum"), "procedure" = c("QR decomposition by full sample method"),
-          "exponent" = matrix(c(lv[N, ], varlv2, Ztest, p.value), nrow = m, ncol = 4, byrow = F, dimnames = list(paste("Exponent", seq(1:m)), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))),
-          "sample" = N, "block.length" = N, "no.block" = 1
+        LE<-list("estimator"=c("Lyapunov exponent spectrum"),"procedure"=c("QR decomposition by full sample method"),
+                 "exponent"=matrix(c(lv[N,],varlv2,Ztest,p.value), nrow=m,ncol=4, byrow=F, dimnames=list(paste("Exponent", seq(1:m)),c("Estimate","Std. Error","z value","Pr(>|z|)"))),
+                 "sample"=N,"block.length"=N,"no.block"=1
         )
         return(LE)
       }
-      LE <- lyap_spec_full(x, doplot = doplot)
+      LE = lyap_spec_full(x,doplot=doplot)
     }
 
     # Class definition
-    LE <- c(data, LE, nprint = 0)
+    LE <- c(data,LE,nprint=0)
     class(LE) <- "lyapunov"
 
     # Output
@@ -525,3 +515,5 @@ lyapunov.spec <- function(data, blocking = c("BOOT", "NOVER", "EQS", "FULL"), B 
     stop("'data' should be should be a jacobian object")
   }
 }
+
+

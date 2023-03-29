@@ -8,7 +8,7 @@
 #' @name lyapunov
 #' @aliases lyapunov
 #' @description
-#' This is an all-in-one function. It provides, at the same time, the delayed-coordinate embedding vector (\code{embedding}), estimates the best neural net model (\code{netfit}), calculates the partial derivatives directly from the chosen neural network model (\code{jacobian.net}). Finally, this function estimates both the largest Lyapunov exponent through the Norma-2 procedure (\code{lyapunov.max}) and the Lyapunov exponent spectrum through the QR decomposition procedure (\code{lyapunov.spec}) taking into account the full sample and three different methods of subsampling by blocks.
+#' This is an all-in-one function. It provides, at the same time, the delayed-coordinate embedding vector (\code{embedding}), estimates the best neural net model (\code{netfit}), calculates the partial derivatives directly from the chosen neural network model (\code{javcobian.net}). Finally, this function estimates both the largest Lyapunov exponent through the Norma-2 procedure (\code{lyapunov.max}) and the Lyapunov exponent spectrum through the QR decomposition procedure (\code{lyapunov.spec}) taking into account the full sample and three different methods of subsampling by blocks.
 #' @param data a \code{vector}, a time-series object \code{ts} or \code{xts}, a \code{data.frame}, a \code{data.table} or a \code{matrix} depending on the method selected in \code{timelapse}.
 #' @param m a non-negative integer denoting a lower and upper bound for the embedding dimension (Default 1:4).
 #' @param lag a non-negative integer denoting a lower and upper bound for the the reconstruction delay (Default 1:1).
@@ -24,7 +24,6 @@
 #' @param seed.t a logical value denoting if the user wants to fix the seed \code{TRUE} or not \code{FALSE} (Default TRUE).
 #' @param seed a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).
 #' @param doplot a logical value denoting if the user wants to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} the evolution of the Lyapunov exponent values are represented for the whole period considering the blocking method chosen by the user. It shows as many graphs as embedding dimensions have been considered (Default \code{TRUE}).
-#' @param ... further arguments passed to or from \code{nnet} function.
 #' @return This function returns several objects considering the parameter set selected by the user. The largest Lyapunov exponent (Norma-2 procedure) and the Lyapunov exponent spectrum (QR decomposition procedure) by each blocking method are estimated. It also contains some useful information about the estimated jacobian, the best-fitted feed-forward single hidden layer neural net model, the best set of weights found, the fitted values, the residuals obtained, the best embedding parameters set chosen, the sample size or the block length considered by each blocking method. This function provides the standard error, the z test value and the p-value for testing the null hypothesis \eqn{H0: \lambda_k > 0 for k = 1,2,3, \ldots, m}. Reject the null hypothesis ${H_0}$ means lack of chaotic behaviour. That is, the data-generating process does not have a chaotic attractor because of it does not show the property of sensitivity to initial conditions.
 #' @note We have considered it appropriate to incorporate a function that unifies the whole process to make it easier and more intuitive for the R users. The DChaos package provides several ways to figure out robustly the neural net estimator of the k-th Lyapunov exponent. Particularly, there are 8 functions (one for each procedure and blocking method) which estimate the Lyapunov exponents consistently. Hence the DChaos package allows the R users to choose between two different procedures to obtain the neural net estimator of the k-th Lyapunov exponent and four ways of subsampling by blocks: full sample, non-overlapping sample, equally spaced sample and bootstrap sample. The blocking methods what they do is to split the time-series data into several blocks by estimating a Lyapunov exponent for each subsample. If the R users choose the non-overlapping sample (\code{blocking = "NOVER"}), the equally spaced sample (\code{blocking = "EQS"}) or the bootstrap sample (\code{blocking = "BOOT"}) the mean and median values of the Lyapunov exponent for each block or subsample are saved. By default we recommend using the median value as it is more robust to the presence of outliers. Notice that the parameter \code{B} will only be considered if the R users choose the bootstrap blocking method.
 #' @references Ellner, S., Gallant, A., McCaffrey, D., Nychka, D. 1991 Convergence rates and data requirements for jacobian-based estimates of lyapunov exponents from data. Physics Letters A 153(6):357-363.
@@ -56,142 +55,108 @@
 #' @importFrom stats median
 #' @importFrom stats is.ts
 #' @export lyapunov
-lyapunov <- function(data, m = 1:4, lag = 1:1, timelapse = c("FIXED", "VARIABLE"), h = 2:10, w0maxit = 100, wtsmaxit = 1e6, pre.white = TRUE, lyapmethod = c("SLE", "LLE", "ALL"), blocking = c("BOOT", "NOVER", "EQS", "FULL", "ALL"), B = 1000, trace = 1, seed.t = TRUE, seed = 56666459, doplot = TRUE, ...) {
+lyapunov     <-  function(data, m=1:4, lag=1:1, timelapse=c("FIXED","VARIABLE"), h=2:10, w0maxit=100, wtsmaxit=1e6, pre.white=TRUE, lyapmethod=c("SLE","LLE","ALL"), blocking=c("BOOT","NOVER","EQS","FULL","ALL"), B=1000, trace=1, seed.t=TRUE, seed=56666459, doplot=TRUE){
 
   # Checks
-  if (is.null(data)) {
-    stop("'data' should be a vector, a time-series object ts or xts, a data.frame, a data.table or a matrix depending on the method selected in 'timelapse'")
-  }
-  if (min(m) < 1) {
-    stop("wrong value for the embedding dimension")
-  }
-  if (min(lag) < 1) {
-    stop("wrong value for the reconstruction delay")
-  }
-  if (min(h) < 2) {
-    stop("wrong value for the number of neurones in the hidden layer")
-  }
-  if (is.null(timelapse)) {
-    stop("'timelapse' should be 'FIXED' or 'VARIABLE'")
-  }
-  if (w0maxit < 1) {
-    stop("wrong value of neural networks iterations")
-  }
-  if (B < 1) {
-    stop("wrong value of bootstrap iterations")
-  }
-  if (is.null(lyapmethod)) {
-    stop("'lyapmethod' should be 'SLE', 'LLE', or 'ALL'")
-  }
-  if (is.null(blocking)) {
-    stop("'blocking' should be 'BOOT', 'NOVER', 'EQS', 'FULL' or 'ALL'")
-  }
-  if (B < 1) {
-    stop("wrong value of bootstrap iterations")
-  }
+  if (is.null(data)){stop("'data' should be a vector, a time-series object ts or xts, a data.frame, a data.table or a matrix depending on the method selected in 'timelapse'")}
+  if (min(m) < 1){stop("wrong value for the embedding dimension")}
+  if (min(lag) < 1){stop("wrong value for the reconstruction delay")}
+  if (min(h) < 2){stop("wrong value for the number of neurones in the hidden layer")}
+  if (is.null(timelapse)){stop("'timelapse' should be 'FIXED' or 'VARIABLE'")}
+  if (w0maxit<1){stop("wrong value of neural networks iterations")}
+  if (B<1){stop("wrong value of bootstrap iterations")}
+  if (is.null(lyapmethod)){stop("'lyapmethod' should be 'SLE', 'LLE', or 'ALL'")}
+  if (is.null(blocking)){stop("'blocking' should be 'BOOT', 'NOVER', 'EQS', 'FULL' or 'ALL'")}
+  if (B<1){stop("wrong value of bootstrap iterations")}
 
   # Settings
-  jacobian <- jacobian.net(data = data, m = m, lag = lag, timelapse = timelapse, h = h, w0maxit = w0maxit, wtsmaxit = wtsmaxit, pre.white = pre.white, trace = trace, seed.t = seed.t, seed = seed, ...)
+  jacobian   <- jacobian.net(data=data, m=m, lag=lag, timelapse=timelapse, h=h, w0maxit=w0maxit, wtsmaxit=wtsmaxit, pre.white=pre.white, trace=trace, seed.t=seed.t, seed=seed)
   lyapmethod <- match.arg(lyapmethod)
-  blocking <- match.arg(blocking)
+  blocking   <- match.arg(blocking)
 
   # Estimates the Lyapunov exponent spectrum by each blocking method
-  if (lyapmethod == "SLE" && blocking == "BOOT") {
-    LE <- lyapunov.spec(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-  }
+  if(lyapmethod=="SLE" && blocking=="BOOT")
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
 
-  if (lyapmethod == "SLE" && blocking == "NOVER") {
-    LE <- lyapunov.spec(data = jacobian, blocking = blocking, doplot = doplot)
-  }
+  if(lyapmethod=="SLE" && blocking=="NOVER")
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,doplot=doplot)
 
-  if (lyapmethod == "SLE" && blocking == "EQS") {
-    LE <- lyapunov.spec(data = jacobian, blocking = blocking, doplot = doplot)
-  }
+  if(lyapmethod=="SLE" && blocking=="EQS")
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,doplot=doplot)
 
-  if (lyapmethod == "SLE" && blocking == "FULL") {
-    LE <- lyapunov.spec(data = jacobian, blocking = blocking, doplot = doplot)
-  }
+  if(lyapmethod=="SLE" && blocking=="FULL")
+    LE=lyapunov.spec(data=jacobian,blocking=blocking,doplot=doplot)
 
-  if (lyapmethod == "SLE" && blocking == "ALL") {
-    exponent.boot <- lyapunov.spec(data = jacobian, blocking = "BOOT", B = B, doplot = doplot)
-    exponent.nover <- lyapunov.spec(data = jacobian, blocking = "NOVER", doplot = doplot)
-    exponent.eqs <- lyapunov.spec(data = jacobian, blocking = "EQS", doplot = doplot)
-    exponent.full <- lyapunov.spec(data = jacobian, blocking = "FULL", doplot = doplot)
-    LE <- c(jacobian,
-      exponent.boot = list(exponent.boot[c(21:27)]), exponent.nover = list(exponent.nover[c(21:27)]),
-      exponent.eqs = list(exponent.eqs[c(21:27)]), exponent.full = list(exponent.full[c(21:26)]), nprint = 1
-    )
+  if(lyapmethod=="SLE" && blocking=="ALL"){
+    exponent.boot=lyapunov.spec(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    exponent.nover=lyapunov.spec(data=jacobian,blocking="NOVER",doplot=doplot)
+    exponent.eqs=lyapunov.spec(data=jacobian,blocking="EQS",doplot=doplot)
+    exponent.full=lyapunov.spec(data=jacobian,blocking="FULL",doplot=doplot)
+    LE <- c(jacobian,exponent.boot=list(exponent.boot[c(21:27)]),exponent.nover=list(exponent.nover[c(21:27)]),
+            exponent.eqs=list(exponent.eqs[c(21:27)]),exponent.full=list(exponent.full[c(21:26)]),nprint=1)
   }
 
   # Estimates the largest Lyapunov Exponent by each blocking method
-  if (lyapmethod == "LLE" && blocking == "BOOT") {
-    LE <- lyapunov.max(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-  }
+  if(lyapmethod=="LLE" && blocking=="BOOT")
+    LE=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
 
-  if (lyapmethod == "LLE" && blocking == "NOVER") {
-    LE <- lyapunov.max(data = jacobian, blocking = blocking, doplot = doplot)
-  }
+  if(lyapmethod=="LLE" && blocking=="NOVER")
+    LE=lyapunov.max(data=jacobian,blocking=blocking,doplot=doplot)
 
-  if (lyapmethod == "LLE" && blocking == "EQS") {
-    LE <- lyapunov.max(data = jacobian, blocking = blocking, doplot = doplot)
-  }
+  if(lyapmethod=="LLE" && blocking=="EQS")
+    LE=lyapunov.max(data=jacobian,blocking=blocking,doplot=doplot)
 
-  if (lyapmethod == "LLE" && blocking == "FULL") {
-    LE <- lyapunov.max(data = jacobian, blocking = blocking, doplot = doplot)
-  }
+  if(lyapmethod=="LLE" && blocking=="FULL")
+    LE=lyapunov.max(data=jacobian,blocking=blocking,doplot=doplot)
 
-  if (lyapmethod == "LLE" && blocking == "ALL") {
-    exponent.boot <- lyapunov.max(data = jacobian, blocking = "BOOT", B = B, doplot = doplot)
-    exponent.nover <- lyapunov.max(data = jacobian, blocking = "NOVER", doplot = doplot)
-    exponent.eqs <- lyapunov.max(data = jacobian, blocking = "EQS", doplot = doplot)
-    exponent.full <- lyapunov.max(data = jacobian, blocking = "FULL", doplot = doplot)
-    LE <- c(jacobian,
-      exponent.boot = list(exponent.boot[c(21:27)]), exponent.nover = list(exponent.nover[c(21:27)]),
-      exponent.eqs = list(exponent.eqs[c(21:27)]), exponent.full = list(exponent.full[c(21:26)]), nprint = 1
-    )
+  if(lyapmethod=="LLE" && blocking=="ALL"){
+    exponent.boot=lyapunov.max(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    exponent.nover=lyapunov.max(data=jacobian,blocking="NOVER",doplot=doplot)
+    exponent.eqs=lyapunov.max(data=jacobian,blocking="EQS",doplot=doplot)
+    exponent.full=lyapunov.max(data=jacobian,blocking="FULL",doplot=doplot)
+    LE <- c(jacobian,exponent.boot=list(exponent.boot[c(21:27)]),exponent.nover=list(exponent.nover[c(21:27)]),
+            exponent.eqs=list(exponent.eqs[c(21:27)]),exponent.full=list(exponent.full[c(21:26)]),nprint=1)
   }
 
   # Estimates both estimators by each blocking method
-  if (lyapmethod == "ALL" && blocking == "BOOT") {
-    exponent.spec <- lyapunov.spec(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    exponent.max <- lyapunov.max(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    LE <- c(jacobian, exponent.spec = list(exponent.spec[c(21:27)]), exponent.max = list(exponent.max[c(21:27)]), nprint = 1)
+  if(lyapmethod=="ALL" && blocking=="BOOT"){
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:27)]),exponent.max=list(exponent.max[c(21:27)]),nprint=1)
   }
 
-  if (lyapmethod == "ALL" && blocking == "NOVER") {
-    exponent.spec <- lyapunov.spec(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    exponent.max <- lyapunov.max(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    LE <- c(jacobian, exponent.spec = list(exponent.spec[c(21:27)]), exponent.max = list(exponent.max[c(21:27)]), nprint = 1)
+  if(lyapmethod=="ALL" && blocking=="NOVER"){
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:27)]),exponent.max=list(exponent.max[c(21:27)]),nprint=1)
   }
 
-  if (lyapmethod == "ALL" && blocking == "EQS") {
-    exponent.spec <- lyapunov.spec(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    exponent.max <- lyapunov.max(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    LE <- c(jacobian, exponent.spec = list(exponent.spec[c(21:27)]), exponent.max = list(exponent.max[c(21:27)]), nprint = 1)
+  if(lyapmethod=="ALL" && blocking=="EQS"){
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:27)]),exponent.max=list(exponent.max[c(21:27)]),nprint=1)
   }
 
-  if (lyapmethod == "ALL" && blocking == "FULL") {
-    exponent.spec <- lyapunov.spec(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    exponent.max <- lyapunov.max(data = jacobian, blocking = blocking, B = B, doplot = doplot)
-    LE <- c(jacobian, exponent.spec = list(exponent.spec[c(21:26)]), exponent.max = list(exponent.max[c(21:26)]), nprint = 1)
+  if(lyapmethod=="ALL" && blocking=="FULL"){
+    exponent.spec=lyapunov.spec(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    exponent.max=lyapunov.max(data=jacobian,blocking=blocking,B=B,doplot=doplot)
+    LE <- c(jacobian,exponent.spec=list(exponent.spec[c(21:26)]),exponent.max=list(exponent.max[c(21:26)]),nprint=1)
   }
 
   # Estimates both estimators by al blocking methods
-  if (lyapmethod == "ALL" && blocking == "ALL") {
-    lyapspec.boot <- lyapunov.spec(data = jacobian, blocking = "BOOT", B = B, doplot = doplot)
-    lyapspec.nover <- lyapunov.spec(data = jacobian, blocking = "NOVER", doplot = doplot)
-    lyapspec.eqs <- lyapunov.spec(data = jacobian, blocking = "EQS", doplot = doplot)
-    lyapspec.full <- lyapunov.spec(data = jacobian, blocking = "FULL", doplot = doplot)
-    lyapmax.boot <- lyapunov.max(data = jacobian, blocking = "BOOT", B = B, doplot = doplot)
-    lyapmax.nover <- lyapunov.max(data = jacobian, blocking = "NOVER", doplot = doplot)
-    lyapmax.eqs <- lyapunov.max(data = jacobian, blocking = "EQS", doplot = doplot)
-    lyapmax.full <- lyapunov.max(data = jacobian, blocking = "FULL", doplot = doplot)
-    LE <- c(jacobian,
-      lyapspec.boot = list(lyapspec.boot[c(21:27)]), lyapmax.boot = list(lyapmax.boot[c(21:27)]),
-      lyapspec.nover = list(lyapspec.nover[c(21:27)]), lyapmax.nover = list(lyapmax.nover[c(21:27)]),
-      lyapspec.eqs = list(lyapspec.boot[c(21:27)]), lyapmax.eqs = list(lyapmax.boot[c(21:27)]),
-      lyapspec.full = list(lyapspec.boot[c(21:26)]), lyapmax.full = list(lyapmax.boot[c(21:26)]), nprint = 1
-    )
+  if(lyapmethod=="ALL" && blocking=="ALL"){
+    lyapspec.boot=lyapunov.spec(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    lyapspec.nover=lyapunov.spec(data=jacobian,blocking="NOVER",doplot=doplot)
+    lyapspec.eqs=lyapunov.spec(data=jacobian,blocking="EQS",doplot=doplot)
+    lyapspec.full=lyapunov.spec(data=jacobian,blocking="FULL",doplot=doplot)
+    lyapmax.boot=lyapunov.max(data=jacobian,blocking="BOOT",B=B,doplot=doplot)
+    lyapmax.nover=lyapunov.max(data=jacobian,blocking="NOVER",doplot=doplot)
+    lyapmax.eqs=lyapunov.max(data=jacobian,blocking="EQS",doplot=doplot)
+    lyapmax.full=lyapunov.max(data=jacobian,blocking="FULL",doplot=doplot)
+    LE <- c(jacobian,lyapspec.boot=list(lyapspec.boot[c(21:27)]),lyapmax.boot=list(lyapmax.boot[c(21:27)]),
+            lyapspec.nover=list(lyapspec.nover[c(21:27)]),lyapmax.nover=list(lyapmax.nover[c(21:27)]),
+            lyapspec.eqs=list(lyapspec.boot[c(21:27)]),lyapmax.eqs=list(lyapmax.boot[c(21:27)]),
+            lyapspec.full=list(lyapspec.boot[c(21:26)]),lyapmax.full=list(lyapmax.boot[c(21:26)]),nprint=1)
   }
 
   # Class definition
@@ -199,4 +164,16 @@ lyapunov <- function(data, m = 1:4, lag = 1:1, timelapse = c("FIXED", "VARIABLE"
 
   # Output
   return(LE)
+
 }
+
+
+
+
+
+
+
+
+
+
+

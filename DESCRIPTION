@@ -1,7 +1,7 @@
 Type: Package
 Package: DChaos
-Version: 0.1-6
-Date: 2021-02-10
+Version: 0.1-7
+Date: 2023-03-29
 Title: Chaotic Time Series Analysis
 Authors@R: c(person("Julio E.","Sandubete",
                    role=c("aut","cre"),
@@ -12,7 +12,7 @@ Authors@R: c(person("Julio E.","Sandubete",
 Author: Julio E. Sandubete [aut, cre],
   Lorenzo Escot [aut]
 Maintainer: Julio E. Sandubete <jsandube@ucm.es>
-Imports: xts, zoo, outliers, nnet, pracma, sandwich
+Imports: xts, zoo, nnet, pracma, sandwich
 Description: Chaos theory has been hailed as a revolution of thoughts and attracting ever increasing 
     attention of many scientists from diverse disciplines. Chaotic systems are nonlinear deterministic 
     dynamic systems which can behave like an erratic and apparently random motion. A relevant field
@@ -25,9 +25,10 @@ Description: Chaos theory has been hailed as a revolution of thoughts and attrac
     behave chaotically or not.
 License: GPL (>= 2)
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.0.2
+RoxygenNote: 7.2.3
 NeedsCompilation: no
-Packaged: 2021-02-10 10:20:47 UTC; julioemilioair
+Suggests: R.rsp
+VignetteBuilder: R.rsp
+Packaged: 2023-03-29 15:07:29 UTC; julioemilio
 Repository: CRAN
-Date/Publication: 2021-02-10 10:40:36 UTC
+Date/Publication: 2023-03-29 16:00:02 UTC

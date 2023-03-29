@@ -19,8 +19,7 @@ lyapunov(
   trace = 1,
   seed.t = TRUE,
   seed = 56666459,
-  doplot = TRUE,
-  ...
+  doplot = TRUE
 )
 }
 \arguments{
@@ -53,14 +52,12 @@ lyapunov(
 \item{seed}{a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).}
 
 \item{doplot}{a logical value denoting if the user wants to draw a plot \code{TRUE} or not \code{FALSE}. If it is \code{TRUE} the evolution of the Lyapunov exponent values are represented for the whole period considering the blocking method chosen by the user. It shows as many graphs as embedding dimensions have been considered (Default \code{TRUE}).}
-
-\item{...}{further arguments passed to or from \code{nnet} function.}
 }
 \value{
 This function returns several objects considering the parameter set selected by the user. The largest Lyapunov exponent (Norma-2 procedure) and the Lyapunov exponent spectrum (QR decomposition procedure) by each blocking method are estimated. It also contains some useful information about the estimated jacobian, the best-fitted feed-forward single hidden layer neural net model, the best set of weights found, the fitted values, the residuals obtained, the best embedding parameters set chosen, the sample size or the block length considered by each blocking method. This function provides the standard error, the z test value and the p-value for testing the null hypothesis \eqn{H0: \lambda_k > 0 for k = 1,2,3, \ldots, m}. Reject the null hypothesis ${H_0}$ means lack of chaotic behaviour. That is, the data-generating process does not have a chaotic attractor because of it does not show the property of sensitivity to initial conditions.
 }
 \description{
-This is an all-in-one function. It provides, at the same time, the delayed-coordinate embedding vector (\code{embedding}), estimates the best neural net model (\code{netfit}), calculates the partial derivatives directly from the chosen neural network model (\code{jacobian.net}). Finally, this function estimates both the largest Lyapunov exponent through the Norma-2 procedure (\code{lyapunov.max}) and the Lyapunov exponent spectrum through the QR decomposition procedure (\code{lyapunov.spec}) taking into account the full sample and three different methods of subsampling by blocks.
+This is an all-in-one function. It provides, at the same time, the delayed-coordinate embedding vector (\code{embedding}), estimates the best neural net model (\code{netfit}), calculates the partial derivatives directly from the chosen neural network model (\code{javcobian.net}). Finally, this function estimates both the largest Lyapunov exponent through the Norma-2 procedure (\code{lyapunov.max}) and the Lyapunov exponent spectrum through the QR decomposition procedure (\code{lyapunov.spec}) taking into account the full sample and three different methods of subsampling by blocks.
 }
 \note{
 We have considered it appropriate to incorporate a function that unifies the whole process to make it easier and more intuitive for the R users. The DChaos package provides several ways to figure out robustly the neural net estimator of the k-th Lyapunov exponent. Particularly, there are 8 functions (one for each procedure and blocking method) which estimate the Lyapunov exponents consistently. Hence the DChaos package allows the R users to choose between two different procedures to obtain the neural net estimator of the k-th Lyapunov exponent and four ways of subsampling by blocks: full sample, non-overlapping sample, equally spaced sample and bootstrap sample. The blocking methods what they do is to split the time-series data into several blocks by estimating a Lyapunov exponent for each subsample. If the R users choose the non-overlapping sample (\code{blocking = "NOVER"}), the equally spaced sample (\code{blocking = "EQS"}) or the bootstrap sample (\code{blocking = "BOOT"}) the mean and median values of the Lyapunov exponent for each block or subsample are saved. By default we recommend using the median value as it is more robust to the presence of outliers. Notice that the parameter \code{B} will only be considered if the R users choose the bootstrap blocking method.

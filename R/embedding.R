@@ -42,127 +42,109 @@
 #' @importFrom stats na.omit
 #' @importFrom xts cbind.xts
 #' @importFrom xts is.xts
-#' @importFrom outliers scores
 #' @importFrom zoo index
 #' @importFrom zoo coredata
 #' @export embedding
-embedding <- function(x, m = 2, lag = 1, timelapse = c("FIXED", "VARIABLE")) {
+embedding<-function(x, m=2, lag=1, timelapse=c("FIXED","VARIABLE")){
 
   # Checks
-  if (is.null(x)) {
-    stop("'x' should be a vector, a time-series object ts or xts, a data.frame, a data.table or a matrix depending on the method selected in 'timelapse'")
-  }
-  if (m < 1) {
-    stop("wrong value for the embedding dimension")
-  }
-  if (lag < 1) {
-    stop("wrong value for the reconstruction delay")
-  }
-  if (is.null(timelapse)) {
-    stop("'timelapse' should be 'FIXED' or 'VARIABLE'")
-  }
-  timelapse <- match.arg(timelapse)
+  if (is.null(x)){stop("'x' should be a vector, a time-series object ts or xts, a data.frame, a data.table or a matrix depending on the method selected in 'timelapse'")}
+  if (m < 1){stop("wrong value for the embedding dimension")}
+  if (lag < 1){stop("wrong value for the reconstruction delay")}
+  if (is.null(timelapse)){stop("'timelapse' should be 'FIXED' or 'VARIABLE'")}
+  timelapse = match.arg(timelapse)
 
   # Method 1: Uniform delayed-coordinate embedding vectors
-  embed.cte <- function(x, m = 2, lag = 1) {
-    if (xts::is.xts(x)) {
-      stop("'x' should be a vector, a time-series object ts, a data.frame, a data.table or a matrix")
-    }
-    if (is.data.frame(x) | is.matrix(x)) {
-      xout <- as.vector(x[, 1])
+  embed.cte<-function(x,m=2,lag=1){
+
+    if (xts::is.xts(x)){stop("'x' should be a vector, a time-series object ts, a data.frame, a data.table or a matrix")}
+    if (is.data.frame(x) | is.matrix(x)){
+      xout<-as.vector(x[,1])
     } else {
-      xout <- x
+      xout<-x
     }
-    if (m == 1) {
-      xout <- xout[-(1:lag)]
-      colnames(xout)[1] <- "y"
+    if (m == 1){
+      xout<-as.data.frame(xout[-(1:lag)])
+      colnames(xout)[1]<-"y"
       return(xout)
       stop()
     } else {
-      xout <- xout[-(1:((m - 1) * lag))]
-      l <- length(xout) - 1
-      for (i in 1:(m - 1)) {
-        xout <- cbind(xout, x[(((m - i) * lag) - (lag - 1)):((m - i) * lag + l - (lag - 1))])
+      xout<-xout[-(1:((m-1)*lag))]
+      l<-length(xout)-1
+      for (i in 1:(m-1)){
+        xout<-cbind(xout,x[(((m-i)*lag)-(lag-1)):((m-i)*lag+l-(lag-1))])
       }
-      xout <- as.data.frame(xout)
-      colnames(xout) <- c("y", paste0("x", 1:(m - 1)))
+      xout<-as.data.frame(xout)
+      colnames(xout)<-c("y",paste0("x", 1:(m-1)))
       return(xout)
     }
   }
 
   # Settings
-  if (timelapse == "FIXED") {
-    xout <- embed.cte(x, m = m, lag = lag)
-  }
+  if (timelapse == "FIXED")
+    xout = embed.cte(x,m=m,lag=lag)
 
   # Method 2: Non-uniform delayed-coordinate embedding vectors
-  embed.vble <- function(x, m = 2, lag = 1) {
-    if (is.data.frame(x) | is.matrix(x) | is.xts(x)) {
-      base::options(digits.secs = 3)
-      if (is.list(x)) {
-        x <- xts::xts(x[[2]], order.by = x[[1]])
+  embed.vble<-function(x,m=2,lag=1){
+
+    if (is.data.frame(x) | is.matrix(x) | is.xts(x)){
+      base::options(digits.secs=3)
+      if (is.list(x)){
+        x<-xts::xts(x[[2]],order.by=x[[1]])
       } else {
-        if (is.xts(x)) {
-          x <- x
+        if (is.xts(x)){
+          x<-x
         } else {
-          x[, 1] <- base::as.POSIXct(base::paste0(base::substr(x[, 1], 1, 11), base::substr(x[, 1], 13, 14), base::substr(x[, 1], 16, 17), ".", substr(x[, 1], 19, 21)), format = "%Y%m%d %H%M%OS")
-          x <- xts::xts(x[, 2], order.by = x[, 1])
+          x[,1]<-base::as.POSIXct(base::paste0(base::substr(x[,1],1,11),base::substr(x[,1],13,14),base::substr(x[,1],16,17),".",substr(x[,1],19,21)),format="%Y%m%d %H%M%OS")
+          x<-xts::xts(x[,2],order.by=x[,1])
         }
       }
-      date <- zoo::index(x)
-      freq <- diff(date, units = "seconds")
-      freq <- c(0, freq)
-      x <- xts::cbind.xts(x[, 1], freq)
-      x <- x[abs(outliers::scores(x[, 2], type = "z")) <= 5]
-      x <- xts::cbind.xts(x, cumsum(x[, 2]))
-      colnames(x) <- c("x", "difftime", "cum.difftime")
-      n <- nrow(x)
-      tt <- c()
-      l <- c()
-      z <- c()
-      if (m == 1) {
-        ii <- 1
-        for (i in 1:n) {
-          tt[i] <- x[i, 3] - (1 * lag)
-          if (tt[i] < 0) {
-            l[i] <- 0
-          } else {
-            while (tt[i] > x[ii, 3]) ii <- ii + 1
-            if (tt[i] == x[ii, 3]) {
-              l[i] <- x[ii, 1]
-            } else {
-              l[i] <- x[ii - 1, 1]
+      date<-zoo::index(x)
+      freq<-diff(date, units = "seconds")
+      freq<-c(0,freq)
+      x<-xts::cbind.xts(x[,1],freq)
+      x<-x[abs(scale(x[,2])) <= 5]
+      x<-xts::cbind.xts(x,cumsum(x[,2]))
+      colnames(x)<-c("x","difftime","cum.difftime")
+      n<-nrow(x)
+      tt<-c()
+      l<-c()
+      z<-c()
+      if (m == 1){
+        ii<-1
+        for(i in 1:n){
+          tt[i]<-x[i,3]-(1*lag)
+          if (tt[i]<0) l[i]<-0 else {
+            while (tt[i]>x[ii,3]) ii<-ii+1
+            if (tt[i]==x[ii,3]) l[i]<-x[ii,1] else {
+              l[i]<-x[ii-1,1]
             }
           }
         }
-        z <- which(tt >= 0)[1]
-        xout <- as.data.frame(l[-(1:(z - 1))])
-        colnames(xout)[1] <- "y"
+        z<-which(tt >= 0)[1]
+        xout<-as.data.frame(l[-(1:(z-1))])
+        colnames(xout)[1]<-"y"
         return(xout)
         stop()
       } else {
-        xt <- matrix(nrow = n, ncol = m - 1)
-        for (j in 1:(m - 1)) {
-          ii <- c()
-          ii <- 1
-          for (i in 1:n) {
-            tt[i] <- x[i, 3] - (j * lag)
-            if (tt[i] < 0) {
-              l[i] <- 0
-            } else {
-              while (tt[i] > x[ii, 3]) ii <- ii + 1
-              if (tt[i] == x[ii, 3]) {
-                l[i] <- x[ii, 1]
-              } else {
-                l[i] <- x[ii - 1, 1]
+        xt<-matrix(nrow=n,ncol=m-1)
+        for(j in 1:(m-1)){
+          ii<-c()
+          ii<-1
+          for(i in 1:n){
+            tt[i]<-x[i,3]-(j*lag)
+            if (tt[i]<0) l[i]<-0 else {
+              while (tt[i]>x[ii,3]) ii<-ii+1
+              if (tt[i]==x[ii,3]) l[i]<-x[ii,1] else {
+                l[i]<-x[ii-1,1]
               }
             }
           }
-          z[j] <- which(tt >= 0)[1]
-          xt[, j] <- l
+          z[j]<-which(tt >= 0)[1]
+          xt[,j]<-l
         }
-        xout <- cbind(x[-(1:(z[j] - 1)), 1], xt[-(1:(z[j] - 1)), ])
-        colnames(xout) <- c("y", paste0("x", 1:(m - 1)))
+        xout<-cbind(x[-(1:(z[j]-1)),1],xt[-(1:(z[j]-1)),])
+        colnames(xout)<-c("y",paste0("x", 1:(m-1)))
         return(xout)
       }
     } else {
@@ -171,9 +153,8 @@ embedding <- function(x, m = 2, lag = 1, timelapse = c("FIXED", "VARIABLE")) {
   }
 
   # Settings
-  if (timelapse == "VARIABLE") {
-    xout <- embed.vble(x, m = m, lag = lag)
-  }
+  if (timelapse == "VARIABLE")
+    xout = embed.vble(x,m=m,lag=lag)
 
   # Output
   return(xout)

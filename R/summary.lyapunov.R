@@ -31,38 +31,40 @@
 #' ## summmary(exponent)
 #' @author Julio E. Sandubete, Lorenzo Escot
 #' @export
-summary.lyapunov <- function(object, ...) {
-  if (object$nprint == 0) {
+summary.lyapunov     <-  function(object, ...){
+
+  if (object$nprint==0){
     cat("Call:\n")
-    cat(object$estimator, "\n")
+    cat(object$estimator,"\n")
     cat("\nCoefficients:\n")
-    if (object$procedure == "QR decomposition by full sample method" | object$procedure == "Norma-2 by full sample method") {
+    if (object$procedure=="QR decomposition by full sample method" | object$procedure=="Norma-2 by full sample method"){
       print(object$exponent)
-    } else {
+    }else{
       print(object$exponent.median)
     }
     cat("---\n")
-    cat("Procedure:", object$procedure, "\n")
-    cat("Embedding dimension: ", object$emb.m, ", ", "Time-delay: ", object$emb.lag, ", ", "No. hidden units: ", object$emb.h, sep = "")
-    cat("\nSample size: ", object$sample, ", ", "Block length: ", object$block.length, ", ", "No. blocks: ", object$no.block, sep = "")
+    cat("Procedure:",object$procedure,"\n")
+    cat("Embedding dimension: ",object$emb.m,", ","Time-delay: ",object$emb.lag,", ","No. hidden units: ",object$emb.h,sep = "")
+    cat("\nSample size: ",object$sample,", ","Block length: ",object$block.length,", ","No. blocks: ",object$no.block,sep = "")
   } else {
     cat("Call:\n")
-    cat(unlist(object[[21]][1]), "\n")
+    cat(unlist(object[[21]][1]),"\n")
     cat("\nCoefficients:\n")
-    if (unlist(object[[21]][[2]][1]) == "QR decomposition by full sample method" | unlist(object[[21]][[2]][1]) == "Norma-2 by full sample method") {
+    if (unlist(object[[21]][[2]][1])=="QR decomposition by full sample method" | unlist(object[[21]][[2]][1])=="Norma-2 by full sample method"){
       print(object[[21]][[3]])
       cat("---\n")
-      cat("Procedure:", unlist(object[[21]][2]), "\n")
-      cat("Embedding dimension: ", object$emb.m, ", ", "Time-delay: ", object$emb.lag, ", ", "No. hidden units: ", object$emb.h, sep = "")
-      cat("\nSample size: ", unlist(object[[21]][4]), ", ", "Block length: ", unlist(object[[21]][5]), ", ", "No. blocks: ", unlist(object[[21]][6]), sep = "")
+      cat("Procedure:",unlist(object[[21]][2]),"\n")
+      cat("Embedding dimension: ",object$emb.m,", ","Time-delay: ",object$emb.lag,", ","No. hidden units: ",object$emb.h,sep = "")
+      cat("\nSample size: ",unlist(object[[21]][4]),", ","Block length: ",unlist(object[[21]][5]),", ","No. blocks: ",unlist(object[[21]][6]),sep = "")
       cat("... only the first method is shown (see lyapunov object)\n")
-    } else {
+    }else{
       print(object[[21]][[4]])
       cat("---\n")
-      cat("Procedure:", unlist(object[[21]][2]), "\n")
-      cat("Embedding dimension: ", object$emb.m, ", ", "Time-delay: ", object$emb.lag, ", ", "No. hidden units: ", object$emb.h, sep = "")
-      cat("\nSample size: ", unlist(object[[21]][5]), ", ", "Block length: ", unlist(object[[21]][6]), ", ", "No. blocks: ", unlist(object[[21]][7]), sep = "")
+      cat("Procedure:",unlist(object[[21]][2]),"\n")
+      cat("Embedding dimension: ",object$emb.m,", ","Time-delay: ",object$emb.lag,", ","No. hidden units: ",object$emb.h,sep = "")
+      cat("\nSample size: ",unlist(object[[21]][5]),", ","Block length: ",unlist(object[[21]][6]),", ","No. blocks: ",unlist(object[[21]][7]),sep = "")
       cat("... only the first method is shown (see lyapunov object)\n")
     }
   }
 }
+

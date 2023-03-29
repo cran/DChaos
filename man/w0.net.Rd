@@ -12,8 +12,7 @@ w0.net(
   rangx = 1/max(abs(x)),
   w0maxit = 100,
   seed.t = TRUE,
-  seed = 56666459,
-  ...
+  seed = 56666459
 )
 }
 \arguments{
@@ -32,8 +31,6 @@ w0.net(
 \item{seed.t}{a logical value denoting if the user wants to fix the seed \code{TRUE} or not \code{FALSE} (Default TRUE).}
 
 \item{seed}{a non-negative integer denoting the value of the seed selected if \code{seed.t = TRUE} (Default 56666459).}
-
-\item{...}{further arguments passed to or from \code{nnet} function.}
 }
 \value{
 The optimal initial parameter vector of the neural net model considering the argument set selected by the user.

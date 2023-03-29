@@ -31,31 +31,34 @@
 #' @importFrom stats rnorm
 #' @importFrom stats as.ts
 #' @export logistic.sim
-logistic.sim <- function(a = 4, s = 0, x0 = runif(1, 0, 1), n = 1000, n.start = 50) {
+logistic.sim  <- function(a=4, s=0, x0=runif(1,0,1), n=1000, n.start=50){
 
   # Settings
-  innov <- rnorm(n)
-  start.innov <- rnorm(n.start)
-  e <- c(start.innov[1L:n.start], innov[1L:n])
-  ntot <- length(e)
-  x <- double(ntot)
-  x[1] <- x0
+  innov         <- rnorm(n)
+  start.innov   <- rnorm(n.start)
+  e             <- c(start.innov[1L:n.start], innov[1L:n])
+  ntot          <- length(e)
+  x             <- double(ntot)
+  x[1]          <- x0
 
   # Simulates time-series data from the Logistic map
-  if (s != 0) {
-    for (i in 2:ntot) {
-      x[i] <- a * x[i - 1] * (1 - x[i - 1])
+  if(s != 0) {
+    for(i in 2:ntot) {
+      x[i] <- a*x[i-1]*(1-x[i-1])
     }
-    x <- x + s * e
+    x <- x + s*e
   } else {
-    for (i in 2:ntot) {
-      x[i] <- a * x[i - 1] * (1 - x[i - 1])
+    for(i in 2:ntot) {
+      x[i] <- a*x[i-1]*(1-x[i-1])
     }
   }
-  if (n.start > 0) {
+  if (n.start > 0){
     x <- x[-(1L:n.start)]
   }
 
   # Output
   return(ts(x))
 }
+
+
+

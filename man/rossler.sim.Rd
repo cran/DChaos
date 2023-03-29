@@ -48,11 +48,11 @@ This function provides also noisy time-series data from the deterministic rossle
 ## set.seed(34)
 ## Simulates time-series data from the deterministic rossler system
 ## with a chaotic behaviour.
-ts <- rossler.sim(a = 0.2, b = 0.2, c = 5.7, s = 0, time = seq(0, 100, 0.1))
+ts <- rossler.sim(a=0.2, b=0.2, c=5.7, s=0, time=seq(0,100,0.1))
 ##
 ## Simulates time-series data from the deterministic rossler system
 ## with a non-chaotic behaviour.
-ts <- rossler.sim(a = 0.1, b = 0.1, c = 7, s = 0, time = seq(0, 100, 0.1))
+ts <- rossler.sim(a=0.1, b=0.1, c=7, s=0, time=seq(0,100,0.1))
 }
 \references{
 Rössler, O. 1976 An equation for continuous chaos. Physics Letters A 57(5):397-398.
